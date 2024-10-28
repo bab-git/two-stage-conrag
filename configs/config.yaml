@@ -1,4 +1,10 @@
 # configs/config.yaml
+settings:
+  verbose: False
+splitter:
+  large_chunk_size: 2000
+  small_chunk_size: 400 # chunk size for keyword search. small enough to capture a few sentenses
+  paragraph_separator: "\n \n"
 
 # LLMs Configuration
 llm:
@@ -11,8 +17,9 @@ Vectorstore:
   persist_directory : 'chromadb'
 
 Retrieval:
-  semantic_CE_model : cross-encoder/stsb-TinyBERT-L-4 # cross encoder for similarity scoring of semantic search retults
-  CE_model_name: cross-encoder/ms-marco-MiniLM-L-6-v2 # cross encoder for similarity scoring of BM25 keyword search results
-  top_k_BM25: 3 # top k results from BM25 keyword search that limits the number of found relevant main pdfs
-  top_k_semantic: 10 # top k chunk results from semantic search
-  top_k_final: 5 # Final selected k chunks from semantic search and BM25 keyword search to use for answer generation
+  semantic_CE_model : cross-encoder/stsb-TinyBERT-L-4 # cross encoder for similarity scoring of semantic search retults. The models are optimized for semantic similarity
+  keyword_CE_model: cross-encoder/ms-marco-MiniLM-L-6-v2 # cross encoder for similarity scoring of BM25 keyword search results. MS MARCO Cross-Encoders are well-suited for tasks that involve keyword search
+  top_k_BM25: 200 # top k results from BM25 keyword search
+  top_k_documents: 5 # top relevant pdfs to select based on keyword search - np.ceil(top_k_BM25/40)
+  top_k_semantic: 50 # top k chunk results from semantic search - top_k_documents*10
+  top_k_final: 10 # Final selected k chunks from semantic search and BM25 keyword search to use for answer generation

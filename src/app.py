@@ -1,9 +1,22 @@
 import os
 import streamlit as st
 from omegaconf import OmegaConf
+from dotenv import load_dotenv, find_dotenv
+import getpass
+
+# Load environment variables from .env file
+load_dotenv(find_dotenv())
+
+def _set_if_undefined(var: str):
+    if not os.environ.get(var):
+        os.environ[var] = getpass.getpass(f"Please provide your {var}")
+    else:
+        print(f"{var} already defined")
+
+# Ensure OPENAI_API_KEY is set
+_set_if_undefined("OPENAI_API_KEY")
 
 from helper_functions import PDFManager, Retrievers, QAchains
-
 
 def main():
     """
@@ -11,12 +24,11 @@ def main():
     """
     # Load configuration using OmegaConf
     config = OmegaConf.load("configs/config.yaml")
-    st.title("PDF Question Answering System")
-    st.subheader("Author: Babak Hosseini")
+    # print(config)
 
-    st.write("""
-    This application allows you to upload a folder of PDF documents and ask questions related to their content.
-    """)
+    st.title("Two-Stage RAG System for PDF Question Answering")
+    st.subheader("Fast yet Precise Document Retrieval and Question Answering")
+    st.write("Upload a folder of PDF documents and ask questions to extract relevant information using the two-stage pipeline.")
 
     # Initialize session state variables
     initialize_session_state()
@@ -35,7 +47,7 @@ def main():
             st.error("Please enter a valid directory path containing PDF files.")
 
     # Question Section
-    if st.session_state.get('retriever_large'):
+    if st.session_state.get('retriever_small'):
         st.header("2. Ask a Question")
         handle_question_section(config)
 
@@ -81,8 +93,8 @@ def process_pdfs(pdf_path, config):
     # Update session state
     st.session_state.pdf_manager = pdf_manager
     st.session_state.retrievers = retrievers
-    st.session_state.retriever_large = retrievers.retriever_large
-    if st.session_state.retriever_large:
+    st.session_state.retriever_small = retrievers.retriever_small
+    if st.session_state.retriever_small:
         st.success("PDFs and vector store processed successfully!")
 
 
@@ -95,7 +107,10 @@ def handle_question_section(config):
     """
     question = st.text_input(
         "Enter your question related to the uploaded documents:",
-        value="what is the outlook on the energy sector, and why do they find it attractive despite having a bearish outlook on oil prices?"
+        value='''According to Morningstar's senior US economist Preston Caldwell, why is the 
+Federal Reserve's forecast of a single interest rate cut in 2024 considered
+too cautious, and what alternative scenario does Caldwell anticipate based 
+on inflation trends?'''
     )
 
     qa_chains = QAchains(st.session_state.retrievers, config)
@@ -133,8 +148,8 @@ def process_question(question, qa_chains):
             qa_chains.shorten_question(question)
 
         with st.spinner("Searching for relevant documents..."):
-            qa_chains.retrieve_chunks()
-            qa_chains.rank_chunks()
+            qa_chains.retrieve_context()
+            # qa_chains.rank_chunks()
 
         with st.spinner("Generating answer..."):
             answer = qa_chains.generate_answer()
