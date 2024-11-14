@@ -16,7 +16,10 @@
 
 ## Introduction
 
-The Two-Stage Consecutive RAG pipeline optimizes both precision and scalability by employing a sequential retrieval strategy that leverages the strengths of both keyword-based and semantic search while minimizing computational overhead. The user can upload PDF documents and interactively ask questions about their content. By leveraging a two-staged retrieval approach, the system processes documents, retrieves relevant information, and provides precise responses based on the uploaded content.
+The **Two-Stage Consecutive RAG** pipeline optimizes both precision and scalability by employing a sequential retrieval strategy that leverages the strengths of both keyword-based and semantic search while minimizing computational overhead. The user can upload PDF documents and interactively ask questions about their content. By leveraging a two-staged retrieval approach, the system processes documents, retrieves relevant information, and provides precise responses based on the uploaded content.
+
+For a detailed explanation of the system, its design, and performance evaluation, check out the complete blog post: [Two-Stage Consecutive RAG for Document QA](https://medium.com/@bbkhosseini/two-stage-consecutive-rag-for-document-qa-enhancing-precision-and-scalability-ac2af206babd).
+
 
 ## System Overview
 
