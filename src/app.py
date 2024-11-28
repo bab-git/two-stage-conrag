@@ -18,40 +18,6 @@ _set_if_undefined("OPENAI_API_KEY")
 
 from helper_functions import PDFManager, Retrievers, QAchains
 
-def main():
-    """
-    The main function to define the Streamlit application for PDF-based Question Answering.
-    """
-    # Load configuration using OmegaConf
-    config = OmegaConf.load("configs/config.yaml")
-    # print(config)
-
-    st.title("Two-Stage RAG System for PDF Question Answering")
-    st.subheader("Fast yet Precise Document Retrieval and Question Answering")
-    st.write("Upload a folder of PDF documents and ask questions to extract relevant information using the two-stage pipeline.")
-
-    # Initialize session state variables
-    initialize_session_state()
-
-    # PDF Upload Section
-    st.header("1. Upload PDF Documents")
-    pdf_path = st.text_input(
-        "Enter the path to the folder containing your PDF files:",
-        value="data/sample_pdfs/"
-    )
-
-    if st.button("Submit PDFs"):
-        if pdf_path and os.path.isdir(pdf_path):
-            process_pdfs(pdf_path, config)
-        else:
-            st.error("Please enter a valid directory path containing PDF files.")
-
-    # Question Section
-    if st.session_state.get('retriever_small'):
-        st.header("2. Ask a Question")
-        handle_question_section(config)
-
-
 def initialize_session_state():
     """
     Initialize necessary session state variables for Streamlit.
@@ -64,7 +30,6 @@ def initialize_session_state():
         st.session_state.answer = ""
     if 'qa_history' not in st.session_state:
         st.session_state.qa_history = []
-
 
 def process_pdfs(pdf_path, config):
     """
@@ -97,6 +62,30 @@ def process_pdfs(pdf_path, config):
     if st.session_state.retriever_small:
         st.success("PDFs and vector store processed successfully!")
 
+def process_question(question, qa_chains):
+    """
+    Process the user's question by shortening it, retrieving relevant chunks, ranking them, and generating an answer.
+
+    Args:
+        question (str): The user's question.
+        qa_chains (QAchains): An instance of the QAchains class.
+    """
+    try:
+        with st.spinner("Shortening question..."):
+            qa_chains.shorten_question(question)
+
+        with st.spinner("Searching for relevant documents..."):
+            qa_chains.retrieve_context()
+            # qa_chains.rank_chunks()
+
+        with st.spinner("Generating answer..."):
+            answer = qa_chains.generate_answer()
+
+        # Update session state
+        st.session_state.answer = answer
+        st.session_state.qa_history.append((question, answer))
+    except Exception as e:
+        st.error(f"An error occurred while processing the question: {e}")
 
 def handle_question_section(config):
     """
@@ -134,32 +123,38 @@ on inflation trends?'''
             st.markdown(f"**A{idx}:** {a}")
             st.markdown("---")
 
-
-def process_question(question, qa_chains):
+def main():
     """
-    Process the user's question by shortening it, retrieving relevant chunks, ranking them, and generating an answer.
-
-    Args:
-        question (str): The user's question.
-        qa_chains (QAchains): An instance of the QAchains class.
+    The main function to define the Streamlit application for PDF-based Question Answering.
     """
-    try:
-        with st.spinner("Shortening question..."):
-            qa_chains.shorten_question(question)
+    # Load configuration using OmegaConf
+    config = OmegaConf.load("configs/config.yaml")
+    # print(config)
 
-        with st.spinner("Searching for relevant documents..."):
-            qa_chains.retrieve_context()
-            # qa_chains.rank_chunks()
+    st.title("Two-Stage RAG System for PDF Question Answering")
+    st.subheader("Fast yet Precise Document Retrieval and Question Answering")
+    st.write("Upload a folder of PDF documents and ask questions to extract relevant information using the two-stage pipeline.")
 
-        with st.spinner("Generating answer..."):
-            answer = qa_chains.generate_answer()
+    # Initialize session state variables
+    initialize_session_state()
 
-        # Update session state
-        st.session_state.answer = answer
-        st.session_state.qa_history.append((question, answer))
-    except Exception as e:
-        st.error(f"An error occurred while processing the question: {e}")
+    # PDF Upload Section
+    st.header("1. Upload PDF Documents")
+    pdf_path = st.text_input(
+        "Enter the path to the folder containing your PDF files:",
+        value="data/sample_pdfs/"
+    )
 
+    if st.button("Submit PDFs"):
+        if pdf_path and os.path.isdir(pdf_path):
+            process_pdfs(pdf_path, config)
+        else:
+            st.error("Please enter a valid directory path containing PDF files.")
+
+    # Question Section
+    if st.session_state.get('retriever_small'):
+        st.header("2. Ask a Question")
+        handle_question_section(config)
 
 if __name__ == "__main__":
     main()

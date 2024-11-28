@@ -18,10 +18,9 @@ from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.retrievers.document_compressors import CrossEncoderReranker
 from langchain.retrievers import ContextualCompressionRetriever
-from langchain.retrievers import SelfQueryRetriever
+# from langchain.retrievers import SelfQueryRetriever
 from sentence_transformers.cross_encoder import CrossEncoder
 import chromadb
-
 
 def is_streamlit_running():
     """
@@ -257,7 +256,7 @@ class Retrievers:
             )
 
             for i, chunk in enumerate(small_chunks_retrieved):
-                chunk.metadata['score'] = scores[i]
+                chunk.metadata['score'] = float(scores[i])
             
             # for debugging:            
             if self.verbose:
@@ -529,7 +528,7 @@ class QAchains:
             if self.verbose:
                 print("\n === The top score chunks were concatenated ==")
                 for doc in top_score_docs:
-                    print(doc.metadata['score'], doc.metadata['name'], doc.metadata['page'], doc.page_content[:20])            
+                    print(doc.metadata['aggregated_score'], doc.metadata['name'], doc.metadata['page'], doc.page_content[:20])            
 
             if sreamlit_running:
                 st.success("The top score chunks were concatenated")
