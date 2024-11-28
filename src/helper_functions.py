@@ -3,9 +3,9 @@ from collections import defaultdict
 import streamlit as st
 from streamlit.runtime.scriptrunner import get_script_run_ctx
 import numpy as np
-from pprint import pprint
-from langchain.chains.query_constructor.base import AttributeInfo
-from langchain.chains import LLMChain
+# from pprint import pprint
+# from langchain.chains.query_constructor.base import AttributeInfo
+# from langchain.chains import LLMChain
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
@@ -14,10 +14,10 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_community.retrievers import BM25Retriever                
-from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+# from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.retrievers.document_compressors import CrossEncoderReranker
-from langchain.retrievers import ContextualCompressionRetriever
+# from langchain.retrievers.document_compressors import CrossEncoderReranker
+# from langchain.retrievers import ContextualCompressionRetriever
 # from langchain.retrievers import SelfQueryRetriever
 from sentence_transformers.cross_encoder import CrossEncoder
 import chromadb
