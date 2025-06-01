@@ -1,0 +1,15 @@
+ipykernel
+python-dotenv
+seaborn
+hydra-core
+omegaconf
+docarray
+lark
+pypdf
+langchain-chroma
+langchain-community
+langchain-core
+langchain-huggingface
+langchain-openai
+rank-bm25
+streamlit

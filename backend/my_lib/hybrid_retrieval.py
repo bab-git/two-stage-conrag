@@ -1,0 +1,91 @@
+import numpy as np
+from langchain_community.retrievers import BM25Retriever        
+from backend.my_lib.pdf_manager import PDFManager
+from backend.my_lib.retrievers import Retrievers
+
+# Hybrid retrieval class
+class Hybrid_Retrieval:
+    def __init__(self, pdf_manager: PDFManager, retrievers: Retrievers, config):
+        self.pdf_manager = pdf_manager
+        self.chunks = pdf_manager.large_chunks
+        self.vectorstore = pdf_manager.vectorstore
+        self.CE_model_keywords = retrievers.CE_model_keywords
+        self.CE_model_semantic = retrievers.CE_model_semantic        
+        self.verbose = config.settings.verbose
+        self.modelID = config.llm.openai_modelID 
+        self.top_score_docs = None       
+    
+    def hybrid_retriever(self, question, top_k_BM25, top_k_semantic, top_k_final, rrf_k = 60, hybrid = True):
+        chunks = self.chunks
+                
+        if hybrid:
+            print('=== Hybrid Retrieval with BM25 and semantic search ===')
+            retriever_kw = BM25Retriever.from_documents(documents = chunks, k=top_k_BM25)        
+
+            kw_chunks_retrieved = retriever_kw.invoke(question) 
+            if self.verbose:
+                print(f'Number of retrieved documents: {len(kw_chunks_retrieved)}')
+                for chunk in kw_chunks_retrieved:
+                    print(f'name: {chunk.metadata["name"]}, page: {chunk.metadata["page"]}, page_content: {chunk.page_content[:10]}')
+
+            scores = self.CE_model_keywords.predict(
+                [(question, result.page_content) for result in kw_chunks_retrieved]
+            )        
+
+            # create a variable rank as the list of indices of largest scores items till the smallest
+            rank_kw_chunks_retrieved = np.argsort(-scores) 
+            
+            rank_kw_dict = {chunk.metadata['index'] : rank + 1 for chunk, rank in zip(kw_chunks_retrieved, rank_kw_chunks_retrieved)}    
+            if self.verbose:
+                print('keyword retrieval scores:')
+                print(scores)      
+                print('keyword retrieval ranks:')
+                print(rank_kw_dict)
+        else:
+            print('=== Semantic search retrieval only === ')
+
+        # Retrieval with semantic search
+        retriever_large = self.vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": top_k_semantic})
+        large_chunks_retrieved = retriever_large.invoke(question)        
+                
+        passages = [doc.page_content for doc in large_chunks_retrieved]
+        ranks = self.CE_model_semantic.rank(question, passages)
+        rank_large_chunks_retrieved = [rank['corpus_id'] for rank in ranks]
+        
+        if self.verbose:
+            print(f'Number of retrieved documents: {len(large_chunks_retrieved)}')
+            for chunk in large_chunks_retrieved:
+                print(f'name: {chunk.metadata["name"]}, page: {chunk.metadata["page"]}, page_content: {chunk.page_content[:10]}')
+        
+        rank_semantic_dict = {chunk.metadata['index']: rank + 1 for chunk, rank in zip(large_chunks_retrieved, rank_large_chunks_retrieved)}        
+
+        if hybrid:
+            # Calculate RRF score for the chunks
+            rrf_scores = [0 for _ in range(len(chunks))]
+            for index in range(len(chunks)):
+                kw_rank = rank_kw_dict[index] if index in rank_kw_dict.keys() else float('inf')
+                semantic_rank = rank_semantic_dict[index] if index in rank_semantic_dict.keys() else float('inf')                        
+                rrf_scores[index] = (1 / (rrf_k + kw_rank)) + (1 / (rrf_k + semantic_rank))            
+            rrf_ranks = np.argsort(-np.array(rrf_scores))
+
+            if self.verbose:
+                print('\nRRF scores:')
+                print(rrf_scores)
+                print('\nRRF ranks:')
+                print(rrf_ranks[:top_k_final])
+
+            top_score_docs = list()
+            for i in range(top_k_final):
+                top_score_docs.append(chunks[rrf_ranks[i]])
+        else:
+            top_score_docs = list()
+            for i in range(top_k_final):
+                top_score_docs.append(large_chunks_retrieved[rank_large_chunks_retrieved[i]])
+        
+        if self.verbose:
+            print(f'Number of retrieved documents: {len(top_score_docs)}')
+            for chunk in top_score_docs:
+                print(f'name: {chunk.metadata["name"]}, page: {chunk.metadata["page"]}, page_content: {chunk.page_content[:10]}')
+
+        self.top_score_docs = top_score_docs
+        return top_score_docs

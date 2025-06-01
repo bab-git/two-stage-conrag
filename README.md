@@ -45,6 +45,14 @@ For a detailed explanation of the system, its design, and performance evaluation
    git clone https://github.com/yourusername/two-stage-conrag.git
    cd two-stage-conrag
    ```
+
+2. **Python Environment Setup**:
+Ensure you have Python 3.12.0 installed. You can install it using [pyenv](https://github.com/pyenv/pyenv):
+```bash
+pyenv install 3.12.0
+pyenv local 3.12.0
+```
+
 2. **Create and Activate a Virtual Environment**:
    ```bash
    python -m venv .venv
