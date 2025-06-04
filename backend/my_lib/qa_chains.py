@@ -5,6 +5,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from backend.settings import streamlit_running
+from omegaconf import OmegaConf
 
 # streamlit_running = is_streamlit_running()
 # if streamlit_running == False:
@@ -13,9 +14,19 @@ from backend.settings import streamlit_running
 # The QAchains class
 class QAchains:
     """
-    Handles the Question-Answering pipeline, including question shortening, retrieval, ranking, and answer generation.
+    A class that orchestrates the Question-Answering pipeline for document-based queries.
+
+    This class implements a multi-stage QA process that:
+    1. Shortens user questions to extract key terms and entities
+    2. Retrieves relevant document chunks using hybrid retrieval
+    3. Ranks and filters retrieved documents based on relevance scores
+    4. Generates comprehensive answers using retrieved context
+
+    The pipeline combines keyword-based and semantic retrieval methods to ensure
+    both precision and recall in document retrieval, while maintaining efficiency
+    through question shortening and document ranking.
     """
-    def __init__(self, retrievers: Retrievers, config):        
+    def __init__(self, retrievers: Retrievers, config: OmegaConf):        
         """
         Initializes the QAchain object.
 
@@ -35,7 +46,7 @@ class QAchains:
         self.top_score_docs = None
         self.response = None
 
-    def shorten_question(self, question: str):
+    def shorten_question(self, question: str) -> None:
         """
         Shortens the question to a short phrase with essential keywords.
 
@@ -87,7 +98,22 @@ class QAchains:
             else:
                 print(f"Failed to generate shortened question: {e}")
     
-    def retrieve_context(self):
+    def retrieve_context(self) -> None:
+        """
+        Retrieves and processes relevant context from documents using a two-stage retrieval approach.
+
+        This method implements a hybrid retrieval strategy that combines:
+        1. Initial retrieval of small chunks using the shortened question
+        2. Document-level scoring (DRS) calculation
+        3. Retrieval of large chunks based on the original question and filtered documents
+        4. Score aggregation for both small and large chunks
+        5. Final concatenation of the highest-scoring chunks
+
+        The method updates the instance variables with the retrieved context and scores.
+
+        Raises:
+            Exception: If any step in the retrieval process fails, an error message is displayed.
+        """
         try:
             question = self.question
             shortened_question = self.shortened_question
@@ -154,7 +180,7 @@ class QAchains:
             else:
                 print(f"Failed to retrieve context for the input quersion: {e}")
 
-    def generate_answer(self):
+    def generate_answer(self) -> str:
         """
         Generate an answer to the question based on the top-k ranked chunks of documents.
 

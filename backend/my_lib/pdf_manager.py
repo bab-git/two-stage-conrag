@@ -5,19 +5,27 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
+from omegaconf import OmegaConf
 import chromadb
 
-# sreamlit_running = is_streamlit_running()
-# if streamlit_running == False:
-#     print('streamlit is not running')
 # ------------------------------
 # Define the PDFManager class
 # ------------------------------
 class PDFManager:
     """
-    Manages PDF loading, chunking, and vector store creation.
+    A class that manages the loading, processing, and storage of PDF documents for question answering.
+
+    This class handles:
+    1. Loading PDF files from a specified directory
+    2. Splitting documents into small and large chunks for different retrieval strategies
+    3. Creating and managing a vector store for semantic search
+    4. Persisting document embeddings for efficient retrieval
+
+    The class implements a two-stage chunking strategy to support both keyword-based
+    and semantic retrieval methods, optimizing for both precision and recall in
+    document search operations.
     """
-    def __init__(self, pdf_path: str, config):
+    def __init__(self, pdf_path: str, config: OmegaConf):
         """
         Initializes the PDFManager with the necessary configurations.
 
@@ -48,17 +56,22 @@ class PDFManager:
         self.small_chunks = None
         self.large_chunks = None        
 
-    def load_pdfs(self):            
+    def load_pdfs(self) -> None:            
         """
-        Loads all PDF files from the specified directory using LangChain's PyPDFLoader.        
+        Loads all PDF files from the specified directory using LangChain's PyPDFLoader.
+
+        This method:
+        1. Scans the specified directory for PDF files
+        2. Loads each PDF using PyPDFLoader
+        3. Adds metadata (filename and page number) to each document
+        4. Combines all documents into a single list
 
         Attributes:
             documents (list): List of loaded documents, updated in-place.
-        """
-        # filenames = os.listdir(self.pdf_path)
-        # print(filenames)
-        # metadata = [dict(source=filename) for filename in filenames]
 
+        Raises:
+            Exception: If PDF loading fails, displays error message via Streamlit or console.
+        """
         try:
             filenames = [file for file in os.listdir(self.pdf_path) if file.lower().endswith('.pdf')]
             if not filenames:
@@ -89,7 +102,7 @@ class PDFManager:
                 print(f"Failed to load PDF files: {e}")
             return
 
-    def chunk_documents(self):        
+    def chunk_documents(self) -> None:        
         """
         Splits loaded documents into small and large chunks using LangChain's RecursiveCharacterTextSplitter.
 
@@ -131,7 +144,7 @@ class PDFManager:
             else:
                 print(f"Failed to split documents: {e}")
     
-    def create_vectorstore(self):
+    def create_vectorstore(self) -> None:
         """
         Creates a vector store from the loaded document chunks using Chroma and HuggingFace embeddings.
 

@@ -5,14 +5,17 @@ from streamlit.runtime.scriptrunner import get_script_run_ctx
 # Load secrets from .env
 load_dotenv(find_dotenv(), override=True)
 
-def get_env_secrets():
+def get_env_secrets() -> dict[str, str]:
+    """
+    Get environment secrets from .env file.
+    """
     openai_api_key = os.getenv("OPENAI_API_KEY")
     langsmith_api_key = os.getenv("LANGCHAIN_API_KEY")
     
     if openai_api_key and openai_api_key.startswith('sk-proj-') and len(openai_api_key)>10:
         print("OpenAI API key looks good so far, ends with:", openai_api_key[-10:])        
     else:
-        raise ValueError("There might be a problem with your OpenAI API key?")
+        raise RuntimeError("Please set a proper OPENAI_API_KEY in your .env file or environment.")
     
     # check if langsmith_api_key is loaded
     if langsmith_api_key:
@@ -27,7 +30,7 @@ def get_env_secrets():
 
 
 # Find if streamlit is running
-def is_streamlit_running():
+def is_streamlit_running() -> bool:
     """
     Checks if the script is running within a Streamlit app.
 

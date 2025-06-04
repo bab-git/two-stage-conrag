@@ -5,6 +5,8 @@ import numpy as np
 from langchain_community.retrievers import BM25Retriever                
 from sentence_transformers.cross_encoder import CrossEncoder
 from backend.settings import streamlit_running
+from omegaconf import OmegaConf
+from langchain_core.documents import Document
 
 # streamlit_running = is_streamlit_running()
 
@@ -13,9 +15,17 @@ from backend.settings import streamlit_running
 # ------------------------------
 class Retrievers:
     """
-    Sets up various retrievers for keyword and semantic search.
+    A class that manages and coordinates different types of retrievers for document search.
+
+    This class implements a hybrid retrieval system that combines:
+    - BM25 keyword-based retrieval for initial document filtering
+    - Semantic search using cross-encoders for relevance scoring
+    - Document-level scoring and ranking
+
+    The class handles the setup and coordination of these retrievers to provide
+    efficient and accurate document retrieval for question answering tasks.
     """
-    def __init__(self, pdf_manager: PDFManager, config):        
+    def __init__(self, pdf_manager: PDFManager, config: OmegaConf):        
         """
         Initialize the retriever with the vectorstore and small chunks of documents
 
@@ -35,7 +45,7 @@ class Retrievers:
         self.verbose = config.settings.verbose
         self.retriever_small = None
 
-    def setup_retrievers(self):
+    def setup_retrievers(self) -> None:
         """
         Sets up the retrievers.
 
@@ -62,7 +72,7 @@ class Retrievers:
             else:
                 print(f"Failed to create retrievers: {e}")
     
-    def retrieve_small_chunks(self, shortened_question):          
+    def retrieve_small_chunks(self, shortened_question: str) -> list[Document]:          
         """
         Retrieves relevant small chunks based on the shortened question 
         and calculates similarity scores using the cross-encoder model.
@@ -106,7 +116,7 @@ class Retrievers:
                 print(f"Failed to retrieve small chunks: {e}")
             return None
 
-    def calculate_drs(self, small_chunks_retrieved): 
+    def calculate_drs(self, small_chunks_retrieved: list[Document]) -> tuple[list[str], dict[str, float]]: 
         """
         Calculate the Document Retrieval Score (DRS) for the documents associated with the retrieved small chunks.
 
@@ -181,7 +191,7 @@ class Retrievers:
                 print(f"Failed to calculate DRS for PDF documents: {e}")
             return None    
     
-    def score_aggregate(self, retrieved_chunks, normalized_drs):
+    def score_aggregate(self, retrieved_chunks: list[Document], normalized_drs: dict[str, float]) -> list[Document]:
         """
         Aggregate similarity scores for retrieved chunks by multiplying the chunk-level similarity score with the DRS score of the document.
         
@@ -212,7 +222,7 @@ class Retrievers:
                 print(f"Failed to aggregate similarity scores for retrieved chunks: {e}")
             return None
                         
-    def retrieve_large_chunks(self, question, files):
+    def retrieve_large_chunks(self, question: str, files: list[str]) -> list[Document]:
         """
         Retrieve relevant large chunks from the vector store based on the given question and the filtered file names.
 
