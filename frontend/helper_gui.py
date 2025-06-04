@@ -15,15 +15,14 @@ def pdf_uploader_ui():
     )
 
     if st.button("Submit PDFs"):
-        if pdf_path:
-            if os.path.isdir(pdf_path):
-                st.session_state.pdf_path = pdf_path
-                return pdf_path
-            else:
-                st.error("The directory is empty. Please select a directory with PDF files.")
+        if pdf_path and os.path.isdir(pdf_path):
+            # st.session_state.pdf_path = pdf_path
+            return pdf_path
         else:
-            st.error("Please enter a valid directory path.")
-    st.session_state.pdf_path = None
+            st.error("Cannot find PDF files in the directory. Please select a directory with PDF files.")
+            # else:
+            #     st.error("Please enter a valid directory path.")
+    # st.session_state.pdf_path = None
     return None
 
 def question_input_output_ui(config):
