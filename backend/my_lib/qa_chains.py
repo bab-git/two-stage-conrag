@@ -4,7 +4,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from backend.settings import streamlit_running
+from backend.settings import is_streamlit_running
 from omegaconf import OmegaConf
 
 # streamlit_running = is_streamlit_running()
@@ -84,7 +84,7 @@ class QAchains:
 
             shortened_question = shortening_chain.invoke(question)
             # print(shortened_question)
-            if streamlit_running:
+            if is_streamlit_running():
                 st.success(f"The shortened question:\n {shortened_question}")
             else:
                 print(f"The shortened question:\n {shortened_question}")
@@ -93,7 +93,7 @@ class QAchains:
             self.shortened_question = shortened_question
 
         except Exception as e:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error(f"Failed to generate shortened question: {e}")
             else:
                 print(f"Failed to generate shortened question: {e}")
@@ -121,21 +121,21 @@ class QAchains:
 
             # retrieve relevant small chunks
             small_chunks_retrieved = self.retrievers.retrieve_small_chunks(shortened_question)
-            if streamlit_running:
+            if is_streamlit_running():
                 st.success("The small chunks were retrieved")
             else:
                 print("The small chunks were retrieved")
 
             # Calculate DRS for all documents
             documents_selected, DRS_selected_normalized = self.retrievers.calculate_drs(small_chunks_retrieved)
-            if streamlit_running:
+            if is_streamlit_running():
                 st.success("The DRS was calculated for relevant PDF documents")
             else:
                 print("The DRS was calculated for relevant PDF documents")
 
             # retrieve relevant large chunks
             large_chunks_retrieved = self.retrievers.retrieve_large_chunks(question, documents_selected)
-            if streamlit_running:
+            if is_streamlit_running():
                 st.success("The large chunks were retrieved")
             else:
                 print("The large chunks were retrieved")
@@ -154,7 +154,7 @@ class QAchains:
                 for doc in large_chunks_agg_score:
                     print(doc.metadata['aggregated_score'], doc.metadata['name'], doc.metadata['page'], doc.page_content[:20])
 
-            if streamlit_running:
+            if is_streamlit_running():
                 st.success("The aggregated scores were calculated for all retrieved chunks")
             else:
                 print("The aggregated scores were calculated for all retrieved chunks")
@@ -167,7 +167,7 @@ class QAchains:
                 for doc in top_score_docs:
                     print(doc.metadata['aggregated_score'], doc.metadata['name'], doc.metadata['page'], doc.page_content[:20])            
 
-            if streamlit_running:
+            if is_streamlit_running():
                 st.success("The top score chunks were concatenated")
             else:
                 print("The top score chunks were concatenated")
@@ -175,7 +175,7 @@ class QAchains:
             self.top_score_docs = top_score_docs
 
         except Exception as e:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error(f"Failed to retrieve context for the input quersion: {e}")            
             else:
                 print(f"Failed to retrieve context for the input quersion: {e}")
@@ -216,7 +216,7 @@ class QAchains:
             self.response = response.strip()
             return self.response
         except Exception as e:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error(f"Failed to generate answer: {e}")
             else:
                 print(f"Failed to generate answer: {e}")

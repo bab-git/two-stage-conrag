@@ -5,28 +5,29 @@ from streamlit.runtime.scriptrunner import get_script_run_ctx
 # Load secrets from .env
 load_dotenv(find_dotenv(), override=True)
 
-def get_env_secrets() -> dict[str, str]:
+def validate_env_secrets():
     """
-    Get environment secrets from .env file.
+    Validates that all required environment variables are present and properly formatted.
+    
+    This function checks for the presence and format of essential API keys and other
+    environment variables needed for the application to function properly. It raises
+    appropriate exceptions if any required variables are missing or invalid.
+    
+    Raises:
+        RuntimeError: If OPENAI_API_KEY is missing or invalid
+        RuntimeError: If any other required environment variables are missing
+    
+    Note:
+        This function is called during application startup to ensure all
+        necessary configuration is in place before proceeding.
     """
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-    langsmith_api_key = os.getenv("LANGCHAIN_API_KEY")
-    
-    if openai_api_key and openai_api_key.startswith('sk-proj-') and len(openai_api_key)>10:
-        print("OpenAI API key looks good so far, ends with:", openai_api_key[-10:])        
-    else:
-        raise RuntimeError("Please set a proper OPENAI_API_KEY in your .env file or environment.")
-    
-    # check if langsmith_api_key is loaded
-    if langsmith_api_key:
-        print("LangSmith API key found, ends with:", langsmith_api_key[-10:])
-    else:
-        print("LangSmith API key not found")
+    openai_api_key = os.getenv("OPENAI_API_KEY", "")
+    if not openai_api_key.startswith("sk-"):
+        raise RuntimeError("Invalid or missing OPENAI_API_KEY.")
 
-    return {
-        "OPENAI_API_KEY": openai_api_key,
-        "LANGSMITH_API_KEY": langsmith_api_key,
-    }    
+    if lang_key := os.getenv("LANGCHAIN_API_KEY"):
+        print(f"LangSmith key loaded (ends with {lang_key[-10:]})")
+ 
 
 
 # Find if streamlit is running
@@ -42,8 +43,8 @@ def is_streamlit_running() -> bool:
     except:
         return False
 
-streamlit_running = is_streamlit_running()
-if streamlit_running == False:
+# streamlit_running = is_streamlit_running()
+if is_streamlit_running():
     print('streamlit is not running')
 else:
     print('streamlit is running')

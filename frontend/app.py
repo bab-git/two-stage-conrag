@@ -9,6 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from backend.my_lib.pdf_manager import PDFManager
 from backend.my_lib.retrievers import Retrievers
 from backend.my_lib.qa_chains import QAchains
+from backend.settings import validate_env_secrets
 
 from helper_gui import pdf_uploader_ui, question_input_output_ui, display_results_ui
 
@@ -97,7 +98,12 @@ def main() -> None:
 
     if st.session_state.debug:
         st.warning('DEBUG MODE is ON')
-      
+
+    if not st.session_state.get("env_validated"):
+        validate_env_secrets()
+        st.session_state.env_validated = True
+        # st.success("Environment secrets validated successfully!")
+
     # 1) PDF Upload and vector store creation
     pdf_path = pdf_uploader_ui()
     # Create vector store and retrievers only if the pdfs are uploaded successfully

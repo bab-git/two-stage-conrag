@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from backend.settings import streamlit_running
+from backend.settings import is_streamlit_running
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
@@ -75,7 +75,7 @@ class PDFManager:
         try:
             filenames = [file for file in os.listdir(self.pdf_path) if file.lower().endswith('.pdf')]
             if not filenames:
-                if streamlit_running:
+                if is_streamlit_running():
                     st.warning("No PDF files found in the specified directory.")
                 else:
                     print("No PDF files found in the specified directory.")
@@ -91,12 +91,12 @@ class PDFManager:
                 # print(f'{len(document)} {document}\n')
                 docs.extend(document)
             self.documents = docs            
-            if streamlit_running:
+            if is_streamlit_running():
                 st.success(f"Total document pages loaded: {len(self.documents)} from {self.pdf_path}")
             else:
                 print(f"Total document pages loaded: {len(self.documents)} from {self.pdf_path}")
         except Exception as e:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error(f"Failed to load PDF files: {e}")
             else:
                 print(f"Failed to load PDF files: {e}")
@@ -116,7 +116,7 @@ class PDFManager:
             Exception: If the document splitting process fails, an error message is displayed.
         """
         if not self.documents:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error("No documents to split. Please load PDFs first.")
             else:
                 print("No documents to split. Please load PDFs first.")
@@ -134,12 +134,12 @@ class PDFManager:
                 chunk.metadata['index'] = idx
             self.large_chunks = large_chunks
             # print(len(self.large_chunks), len(self.large_chunks[0].page_content))
-            if streamlit_running:
+            if is_streamlit_running():
                 st.success(f"Documents split into {len(self.small_chunks)} small and {len(self.large_chunks)} large chunks.")
             else:
                 print(f"Documents split into {len(self.small_chunks)} small and {len(self.large_chunks)} large chunks.")
         except Exception as e:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error(f"Failed to split documents: {e}")
             else:
                 print(f"Failed to split documents: {e}")
@@ -159,7 +159,7 @@ class PDFManager:
             Exception: If there is an error during the creation of the vector store, an error message is displayed.
         """
         if not self.documents:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error("No documents to index. Please load PDFs first.")
             else:
                 print("No documents to index. Please load PDFs first.")
@@ -184,12 +184,12 @@ class PDFManager:
 
             collection = chroma_client.get_collection(name=self.collection_name)
             # st.success(f'Collection {collection_name} is created, number of itmes: {collection.count()}')
-            if streamlit_running:
+            if is_streamlit_running():
                 st.success(f"Vectorstore {self.collection_name} created successfully with {collection.count()} documents.")
             else:
                 print(f"Vectorstore {self.collection_name} created successfully with {collection.count()} documents.")
         except Exception as e:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error(f"Failed to create vectorstore: {e}")
             else:
                 print(f"Failed to create vectorstore: {e}")

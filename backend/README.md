@@ -15,7 +15,7 @@ This directory contains the core business logic and processing pipeline for the 
 - **`retrievers.py`**: 
   - **Purpose**: Sets up and executes BM25 + semantic retrievers.
   - **Key Functions**: 
-    - `setup_retrievers()`: Initializes BM25, CrossEncoder, and retrieval configs.
+    - `setup_retrievers()`: Initializes BM25 keyword-based retrieval, CrossEncoder re-ranker, and retrieval configs.
     - `retrieve_small_chunks()`: Performs keyword-based retrieval with reranking.
     - `calculate_drs()`: Computes normalized document-level relevance scores.
     - `retrieve_large_chunks()`: Performs semantic search with relevance filtering.
@@ -37,11 +37,11 @@ This directory contains the core business logic and processing pipeline for the 
 
 ### Other Files:
 - **`settings.py`**
-  - **Purpose**: Loads API keys and checks execution context.
+  - **Purpose**: Loads environment variables and provides execution context utilities.
   - **Details**:
-    - Loads `.env` using `dotenv` and validates `OPENAI_API_KEY`.
-    - Optionally logs `LANGSMITH_API_KEY` status.
-    - Includes `is_streamlit_running()` to detect Streamlit vs CLI mode.
+    - Loads `.env` using `dotenv` (secrets like `OPENAI_API_KEY`).
+    - Optionally includes `validate_env_secrets()` for API key validation at runtime.
+    - Provides `is_streamlit_running()` to detect whether the code is executing in a Streamlit session.
 
 
 ## Usage

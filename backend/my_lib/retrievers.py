@@ -4,7 +4,7 @@ from collections import defaultdict
 import numpy as np
 from langchain_community.retrievers import BM25Retriever                
 from sentence_transformers.cross_encoder import CrossEncoder
-from backend.settings import streamlit_running
+from backend.settings import is_streamlit_running
 from omegaconf import OmegaConf
 from langchain_core.documents import Document
 
@@ -52,7 +52,7 @@ class Retrievers:
         Sets up the BM25 retriever and the large retriever based on the vectorstore and small chunks of documents.
         """
         if not self.small_chunks:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error("No small_chunks to index. Please load PDFs first.")
             else:
                 print("No small_chunks to index. Please load PDFs first.")
@@ -62,12 +62,12 @@ class Retrievers:
             self.CE_model_keywords = CrossEncoder(self.keyword_CE_model)
             self.CE_model_semantic = CrossEncoder(self.semantic_CE_model)
 
-            if streamlit_running:
+            if is_streamlit_running():
                 st.success("Retrievers created successfully.")
             else:
                 print("Retrievers created successfully.")
         except Exception as e:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error(f"Failed to create retrievers: {e}")
             else:
                 print(f"Failed to create retrievers: {e}")
@@ -110,7 +110,7 @@ class Retrievers:
             return small_chunks_retrieved
 
         except Exception as e:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error(f"Failed to retrieve small chunks: {e}")
             else:
                 print(f"Failed to retrieve small chunks: {e}")
@@ -185,7 +185,7 @@ class Retrievers:
             
             return documents_selected, DRS_selected_normalized
         except Exception as e:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error(f"Failed to calculate DRS for PDF documents: {e}")
             else:
                 print(f"Failed to calculate DRS for PDF documents: {e}")
@@ -216,7 +216,7 @@ class Retrievers:
             return retrieved_docs_sorted
         
         except Exception as e:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error(f"Failed to aggregate similarity scores for retrieved chunks: {e}")
             else:
                 print(f"Failed to aggregate similarity scores for retrieved chunks: {e}")
@@ -261,7 +261,7 @@ class Retrievers:
             return large_chunks_retrieved
 
         except Exception as e:
-            if streamlit_running:
+            if is_streamlit_running():
                 st.error(f"Failed to retrieve large chunks: {e}")
             else:
                 print(f"Failed to retrieve large chunks: {e}")
