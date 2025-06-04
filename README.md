@@ -28,13 +28,42 @@ For a detailed explanation of the system, its design, and performance evaluation
 ### Workflow Summary
 
 1. **Document Loading and Chunking**: Users upload PDFs, which are split into both small and large text chunks. Small chunks capture specific information and keyword matches, while large chunks provide broader context.
-2. **Vector Store Creation**: TLarge text chunks are embedded using a sentence transformer model and indexed in a vector database (ChromaDB) for efficient semantic search.
+2. **Vector Store Creation**: Large text chunks are embedded using a sentence transformer model and indexed in a vector database (ChromaDB) for efficient semantic search.
 3. **Question Shortening**: User query is condensed into essential keywords using an LLM. 
 4. **BM25 Keyword Search:** A keyword search is performed using the BM25 algorithm on small chunks and the condensed keywords. A Cross-Encoder is used to rerank retrieved chunks based on semantic similarity.
 5. **DRS Calculation:** Aggregates small chunk scores to calculate a document retrieval score (DRS) and select top relevant documents.
 6. **Semantic Search:** Performs semantic search on large chunks within selected documents, and a Cross-Encoder Reranking further refines the relevance of retrieved chunks.
 7. **Context Aggregation:** Aggregates and ranks both small and large chunks based on their scores to form the final context.
 8. **Answer Generation**: The system generates a response based on the construcred context and the input query.
+
+For details on backend components and architecture, see [backend/README.md](backend/README.md).
+
+## Project Structure
+
+```
+two-stage-conrag/
+├── backend/ # Core logic: PDF manager, retrievers, QA chains, settings
+│ ├── my_lib/ # Modular pipeline components
+│ ├── settings.py # Env handling and configuration
+│ ├── tools.py # Utility tools
+│ ├── utils.py # General-purpose helpers
+│ └── requirements.txt # Backend dependencies
+├── frontend/ # Streamlit interface (app.py and GUI layout)
+│ ├── app.py
+│ ├── helper_gui.py
+│ └── requirements.txt # Frontend dependencies
+├── vector_store/ # Embedding DB client and index config
+├── configs/ # YAML configuration files
+│ └── config.yaml
+├── data/ # Sample and full-scale PDF sets
+│ └── sample_pdfs/
+├── notebooks/ # Prototyping and experimentation
+├── .env_example # Template for secrets
+├── Dockerfile.* # Docker setup (backend/frontend)
+├── Makefile # Developer CLI shortcuts
+├── requirements.txt # Root-level dependencies
+└── README.md # Project overview
+```
 
 ## Installation and Setup
 
@@ -53,16 +82,16 @@ pyenv install 3.12.0
 pyenv local 3.12.0
 ```
 
-2. **Create and Activate a Virtual Environment**:
+3. **Create and Activate a Virtual Environment**:
    ```bash
    python -m venv .venv
    source .venv/bin/activate
    ```
-3. **Install Dependencies**:
+4. **Install Dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
-4. **Set Up Environment Variables**:
+5. **Set Up Environment Variables**:
    - Copy `.env_example` to `.env` and set your `OPENAI_API_KEY`.
 
 ## Secrets
@@ -76,8 +105,9 @@ Using LangSmith (and adding its env variables) is optional, but it is highly rec
 
 - Launch the application using Streamlit:
   ```bash
-  streamlit run src/app.py
+  streamlit run frontend/app.py --server.fileWatcherType none
   ```
+  (Optional flag --server.fileWatcherType none disables Streamlit's file watching mechanism to reduce CPU usage or prevent reload issues in large or mounted directories.)
 - Navigate to the provided URL (usually `http://localhost:8501`) to access the dashboard.
 
 ### Using the Application
@@ -104,7 +134,28 @@ For a more extensive test, a full-scale PDF dataset (approximately 150 MB) is av
 - **Advanced Parsing**: Enhance document processing to handle complex structures like tables and images.
 
 ## Conclusion
-The Two-Stage Consecutive RAG system offers a scalable and efficient approach to document-based question answering, balancing precision and scalability without incurring prohibitive costs. By intelligently combining keyword-based and semantic retrieval methods in a sequential manner, the system ensures relevant and contextually accurate answers even in large-scale document environments.
+
+The Two-Stage Consecutive RAG system delivers a scalable and precise solution for document-based question answering by combining keyword and semantic retrieval in a sequential pipeline. This hybrid approach ensures accurate and context-aware answers, even when working with large-scale, complex document collections.
+
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions, suggestions, or feature requests are welcome!
+
+If you'd like to contribute:
+- Fork the repository
+- Create a new branch (`git checkout -b feature/your-feature-name`)
+- Commit your changes and open a pull request
+
+Please ensure any new code is well-documented and tested.
+
+## Contact
+
+For questions, feedback, or collaboration opportunities, feel free to reach out:
+
+- 📧 Email: [bbkhosseini@gmail.com](mailto:bbkhosseini@gmail.com)
+- 🌐 LinkedIn: [https://www.linkedin.com/in/bhosseini/](https://www.linkedin.com/in/bhosseini/)
+- 🧑‍💻 GitHub: [https://github.com/bab-git](https://github.com/bab-git)
