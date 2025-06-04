@@ -21,7 +21,7 @@ from backend.my_lib.pdf_manager import PDFManager
 from backend.my_lib.retrievers import Retrievers
 from backend.my_lib.qa_chains import QAchains
 
-from helper_gui import pdf_uploader_ui, question_input_output_ui
+from helper_gui import pdf_uploader_ui, question_input_output_ui, display_results_ui
 
 # Ensure environment variables are loaded and validated only once
 def _set_if_undefined(var: str):
@@ -39,18 +39,6 @@ def initialize_session_state():
     """
     Initialize necessary session state variables for Streamlit.
     """
-    # if 'retriever_large' not in st.session_state:
-    #     st.session_state.retriever_large = None
-    # if 'retriever_small' not in st.session_state:
-    #     st.session_state.retriever_small = None
-    # if 'pdf_manager' not in st.session_state:
-    #     st.session_state.pdf_manager = None
-    # if 'answer' not in st.session_state:
-    #     st.session_state.answer = ""
-    # if 'qa_history' not in st.session_state:
-    #     st.session_state.qa_history = []
-    # if 'debug' not in st.session_state:
-    #     st.session_state.debug = False  # Default to False
     st.session_state.setdefault('env_loaded', False)
     st.session_state.setdefault('pdf_manager', None)
     st.session_state.setdefault('retrievers', None)
@@ -87,6 +75,9 @@ def main():
     """
     The main function to define the Streamlit application for PDF-based Question Answering.
     """
+    # Display the image at the top of the app    
+    st.image("frontend/static/image.jpeg", use_container_width=True)
+
     # Load configuration using OmegaConf
     config = OmegaConf.load("configs/config.yaml")
     # print(config)
@@ -100,29 +91,40 @@ def main():
     # Initialize session state variables
     initialize_session_state()
       
-    # Show the PDF Upload Section
+    # 1) PDF Upload and vector store creation
     pdf_path = pdf_uploader_ui()
-    
-    # Create the vector store and retrievers only if the pdfs are uploaded successfully
+    # Create vector store and retrievers only if the pdfs are uploaded successfully
     if pdf_path is not None: 
         if st.session_state.debug:            
             st.write('pdfs path:', pdf_path)        
-      
-        # if st.session_state.get("retrievers") is None:
-        if st.session_state.get("retriever_small") is not None:
+              
+        if st.session_state.get("retrievers") is not None:
             st.info('Vector store is already built - you can proceed to ask your question')
         pdf_manager, retrievers = vector_store_builder(pdf_path, config)
         st.session_state.pdf_manager = pdf_manager
         st.session_state.retrievers = retrievers
-        st.session_state.retriever_small = retrievers.retriever_small
+        # st.session_state.retriever_small = retrievers.retriever_small
+        st.session_state.qa_chains = QAchains(retrievers, config)
         st.success("PDFs and vector store processed successfully!")        
    
-    # Show the Question Section only if the retriever is successfully created
-    if st.session_state.get("retriever_small") is not None:
-        # Create QAchain only if it doesn't exist
-        if st.session_state.get("qa_chain") is None:
-            st.session_state.qa_chain = QAchains(st.session_state.retrievers, config)  # Create QAchain
-        question_input_output_ui(config)
+    # 2) Question Section (only if retriever is successfully created)
+    if st.session_state.get("retrievers") is not None:
+        question, answer = question_input_output_ui(
+            config,
+            st.session_state.retrievers,
+            st.session_state.qa_chains,
+            st.session_state.qa_history,
+        )
+
+        if answer is not None:
+            st.session_state.answer = answer
+            st.session_state.qa_history.append((question, answer))
+    
+    # 3) Display answer & history
+    display_results_ui(
+        answer=st.session_state.answer,
+        qa_history=st.session_state.qa_history,
+    )
 
     
 if __name__ == "__main__":

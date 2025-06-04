@@ -6,6 +6,5 @@ langchain-chroma
 matplotlib
 pandas
 hydra-core
-streamlit
 pypdf
 rank-bm25
