@@ -2,10 +2,9 @@ import os
 import sys
 import streamlit as st
 from omegaconf import OmegaConf
-import getpass
 
 # Ensure the root directory is on the Python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from backend.my_lib.pdf_manager import PDFManager
 from backend.my_lib.retrievers import Retrievers
 from backend.my_lib.qa_chains import QAchains
@@ -13,24 +12,26 @@ from backend.settings import validate_env_secrets
 
 from helper_gui import pdf_uploader_ui, question_input_output_ui, display_results_ui
 
+
 def initialize_session_state() -> None:
     """
     Initialize necessary session state variables for Streamlit.
     """
     # Set 'debug' based on env var, but store it in session_state immediately
     st.session_state.setdefault(
-        "debug", 
-        os.getenv("DEBUG_MODE", "false").lower() == "true"
+        "debug", os.getenv("DEBUG_MODE", "false").lower() == "true"
     )
-    st.session_state.setdefault('pdf_manager', None)
-    st.session_state.setdefault('retrievers', None)
-    st.session_state.setdefault('qa_chains', None)
-    st.session_state.setdefault('answer', "")
-    st.session_state.setdefault('qa_history', [])     
+    st.session_state.setdefault("pdf_manager", None)
+    st.session_state.setdefault("retrievers", None)
+    st.session_state.setdefault("qa_chains", None)
+    st.session_state.setdefault("answer", "")
+    st.session_state.setdefault("qa_history", [])
 
 
 @st.cache_resource
-def vector_store_builder(pdf_path: str, _config: OmegaConf) -> tuple[PDFManager, Retrievers]:
+def vector_store_builder(
+    pdf_path: str, _config: OmegaConf
+) -> tuple[PDFManager, Retrievers]:
     """
     Process the uploaded PDF documents: load, chunk, and create a vector store.
 
@@ -40,22 +41,22 @@ def vector_store_builder(pdf_path: str, _config: OmegaConf) -> tuple[PDFManager,
     """
 
     # Step 1: Load and chunk
-    pdf_manager = PDFManager(pdf_path, _config)        
+    pdf_manager = PDFManager(pdf_path, _config)
     pdf_manager.load_pdfs()
     pdf_manager.chunk_documents()
 
     # Step 2: Create vector store
     pdf_manager.create_vectorstore()
-    
+
     # Step 3: Create retrievers
     retrievers = Retrievers(pdf_manager, _config)
     retrievers.setup_retrievers()
-    
+
     return pdf_manager, retrievers
 
 
 def main() -> None:
-    """    
+    """
     Entry point for the Streamlit application that drives the Two-Stage RAG PDF QA system.
 
     This function orchestrates the entire UI and backend workflow:
@@ -80,9 +81,9 @@ def main() -> None:
         - qa_history (list[tuple[str, str]]): A chronological list of (question, answer) pairs.
 
     Returns:
-        None    
+        None
     """
-    # Display the image at the top of the app    
+    # Display the image at the top of the app
     st.image("frontend/static/image.jpeg", use_container_width=True)
 
     # Load configuration using OmegaConf
@@ -91,13 +92,15 @@ def main() -> None:
 
     st.title("Two-Stage RAG System for PDF Question Answering")
     st.subheader("Fast yet Precise Document Retrieval and Question Answering")
-    st.write("Upload a folder of PDF documents and ask questions to extract relevant information using the two-stage pipeline.")
+    st.write(
+        "Upload a folder of PDF documents and ask questions to extract relevant information using the two-stage pipeline."
+    )
 
     # Initialize session state variables
     initialize_session_state()
 
     if st.session_state.debug:
-        st.warning('DEBUG MODE is ON')
+        st.warning("DEBUG MODE is ON")
 
     if not st.session_state.get("env_validated"):
         validate_env_secrets()
@@ -107,20 +110,22 @@ def main() -> None:
     # 1) PDF Upload and vector store creation
     pdf_path = pdf_uploader_ui()
     # Create vector store and retrievers only if the pdfs are uploaded successfully
-    if pdf_path is not None: 
-        if st.session_state.debug:            
-            st.write('pdfs path:', pdf_path)        
-              
+    if pdf_path is not None:
+        if st.session_state.debug:
+            st.write("pdfs path:", pdf_path)
+
         if st.session_state.get("retrievers") is not None:
-            st.info('Vector store is already built - you can proceed to ask your question')
+            st.info(
+                "Vector store is already built - you can proceed to ask your question"
+            )
         pdf_manager, retrievers = vector_store_builder(pdf_path, config)
         st.session_state.pdf_manager = pdf_manager
         st.session_state.retrievers = retrievers
-        
+
         # Create QA chains
         st.session_state.qa_chains = QAchains(retrievers, config)
-        st.success("PDFs and vector store processed successfully!")        
-   
+        st.success("PDFs and vector store processed successfully!")
+
     # 2) Question Section (only if retriever is successfully created)
     if st.session_state.get("retrievers") is not None:
         question, answer = question_input_output_ui(st.session_state.qa_chains)
@@ -128,13 +133,13 @@ def main() -> None:
         if answer is not None:
             st.session_state.answer = answer
             st.session_state.qa_history.append((question, answer))
-    
+
     # 3) Display answer & history
     display_results_ui(
         answer=st.session_state.answer,
         qa_history=st.session_state.qa_history,
     )
 
-    
+
 if __name__ == "__main__":
     main()

@@ -8,6 +8,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from omegaconf import OmegaConf
 import chromadb
 
+
 # ------------------------------
 # Define the PDFManager class
 # ------------------------------
@@ -25,6 +26,7 @@ class PDFManager:
     and semantic retrieval methods, optimizing for both precision and recall in
     document search operations.
     """
+
     def __init__(self, pdf_path: str, config: OmegaConf):
         """
         Initializes the PDFManager with the necessary configurations.
@@ -45,18 +47,18 @@ class PDFManager:
         """
         self.pdf_path = pdf_path
         # self.config = config
-        self.embed_model_id = config.llm.embed_model_id        
+        self.embed_model_id = config.llm.embed_model_id
         self.persist_directory = config.Vectorstore.persist_directory
         self.collection_name = config.Vectorstore.collection_name
         self.small_chunk_size = config.splitter.small_chunk_size
         self.large_chunk_size = config.splitter.large_chunk_size
         self.paragraph_separator = config.splitter.paragraph_separator
         self.documents = []
-        self.vectorstore = None        
+        self.vectorstore = None
         self.small_chunks = None
-        self.large_chunks = None        
+        self.large_chunks = None
 
-    def load_pdfs(self) -> None:            
+    def load_pdfs(self) -> None:
         """
         Loads all PDF files from the specified directory using LangChain's PyPDFLoader.
 
@@ -73,7 +75,11 @@ class PDFManager:
             Exception: If PDF loading fails, displays error message via Streamlit or console.
         """
         try:
-            filenames = [file for file in os.listdir(self.pdf_path) if file.lower().endswith('.pdf')]
+            filenames = [
+                file
+                for file in os.listdir(self.pdf_path)
+                if file.lower().endswith(".pdf")
+            ]
             if not filenames:
                 if is_streamlit_running():
                     st.warning("No PDF files found in the specified directory.")
@@ -83,18 +89,22 @@ class PDFManager:
 
             docs = []
             for idx, file in enumerate(filenames):
-                loader = PyPDFLoader(f'{self.pdf_path}/{file}')
+                loader = PyPDFLoader(f"{self.pdf_path}/{file}")
                 document = loader.load()
                 for page_num, document_fragment in enumerate(document, start=1):
                     document_fragment.metadata = {"name": file, "page": page_num}
-                    
+
                 # print(f'{len(document)} {document}\n')
                 docs.extend(document)
-            self.documents = docs            
+            self.documents = docs
             if is_streamlit_running():
-                st.success(f"Total document pages loaded: {len(self.documents)} from {self.pdf_path}")
+                st.success(
+                    f"Total document pages loaded: {len(self.documents)} from {self.pdf_path}"
+                )
             else:
-                print(f"Total document pages loaded: {len(self.documents)} from {self.pdf_path}")
+                print(
+                    f"Total document pages loaded: {len(self.documents)} from {self.pdf_path}"
+                )
         except Exception as e:
             if is_streamlit_running():
                 st.error(f"Failed to load PDF files: {e}")
@@ -102,7 +112,7 @@ class PDFManager:
                 print(f"Failed to load PDF files: {e}")
             return
 
-    def chunk_documents(self) -> None:        
+    def chunk_documents(self) -> None:
         """
         Splits loaded documents into small and large chunks using LangChain's RecursiveCharacterTextSplitter.
 
@@ -121,35 +131,47 @@ class PDFManager:
             else:
                 print("No documents to split. Please load PDFs first.")
             return
-        
+
         try:
-            child_text_splitter = RecursiveCharacterTextSplitter(chunk_size=self.small_chunk_size, chunk_overlap=0, separators=["\n\n", "\n"])
+            child_text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=self.small_chunk_size,
+                chunk_overlap=0,
+                separators=["\n\n", "\n"],
+            )
             self.small_chunks = child_text_splitter.split_documents(self.documents)
             # print(len(self.small_chunks), len(self.small_chunks[0].page_content))
 
             # Use paragraph separator if you know it from your documents formats
-            large_text_splitter = RecursiveCharacterTextSplitter(chunk_size=self.large_chunk_size, chunk_overlap=200, separators=["\n\n", "\n"])
+            large_text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=self.large_chunk_size,
+                chunk_overlap=200,
+                separators=["\n\n", "\n"],
+            )
             large_chunks = large_text_splitter.split_documents(self.documents)
             for idx, chunk in enumerate(large_chunks):
-                chunk.metadata['index'] = idx
+                chunk.metadata["index"] = idx
             self.large_chunks = large_chunks
             # print(len(self.large_chunks), len(self.large_chunks[0].page_content))
             if is_streamlit_running():
-                st.success(f"Documents split into {len(self.small_chunks)} small and {len(self.large_chunks)} large chunks.")
+                st.success(
+                    f"Documents split into {len(self.small_chunks)} small and {len(self.large_chunks)} large chunks."
+                )
             else:
-                print(f"Documents split into {len(self.small_chunks)} small and {len(self.large_chunks)} large chunks.")
+                print(
+                    f"Documents split into {len(self.small_chunks)} small and {len(self.large_chunks)} large chunks."
+                )
         except Exception as e:
             if is_streamlit_running():
                 st.error(f"Failed to split documents: {e}")
             else:
                 print(f"Failed to split documents: {e}")
-    
+
     def create_vectorstore(self) -> None:
         """
         Creates a vector store from the loaded document chunks using Chroma and HuggingFace embeddings.
 
-        This function initializes an embedding model and a persistent Chroma client. It attempts to delete any existing 
-        collection with the specified collection name before creating a new vector store. The vector store is created 
+        This function initializes an embedding model and a persistent Chroma client. It attempts to delete any existing
+        collection with the specified collection name before creating a new vector store. The vector store is created
         using the large document chunks and is stored persistently.
 
         Attributes:
@@ -165,29 +187,33 @@ class PDFManager:
                 print("No documents to index. Please load PDFs first.")
             return
 
-        try:            
-            embedding = HuggingFaceEmbeddings(model_name=self.embed_model_id)                                    
+        try:
+            embedding = HuggingFaceEmbeddings(model_name=self.embed_model_id)
             # print(len(self.large_chunks))
             chroma_client = chromadb.PersistentClient(path=self.persist_directory)
             try:
                 chroma_client.delete_collection(self.collection_name)
-                print(f'Collection {self.collection_name} is deleted')
+                print(f"Collection {self.collection_name} is deleted")
             except Exception:
-                print(f'Collection {self.collection_name} does not exist')
+                print(f"Collection {self.collection_name} does not exist")
             # print(len(chunks))
             self.vectorstore = Chroma.from_documents(
                 documents=self.large_chunks,
                 embedding=embedding,
                 persist_directory=self.persist_directory,
-                collection_name=self.collection_name
+                collection_name=self.collection_name,
             )
 
             collection = chroma_client.get_collection(name=self.collection_name)
             # st.success(f'Collection {collection_name} is created, number of itmes: {collection.count()}')
             if is_streamlit_running():
-                st.success(f"Vectorstore {self.collection_name} created successfully with {collection.count()} documents.")
+                st.success(
+                    f"Vectorstore {self.collection_name} created successfully with {collection.count()} documents."
+                )
             else:
-                print(f"Vectorstore {self.collection_name} created successfully with {collection.count()} documents.")
+                print(
+                    f"Vectorstore {self.collection_name} created successfully with {collection.count()} documents."
+                )
         except Exception as e:
             if is_streamlit_running():
                 st.error(f"Failed to create vectorstore: {e}")

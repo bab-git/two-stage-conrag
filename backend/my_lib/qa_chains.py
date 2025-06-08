@@ -11,6 +11,7 @@ from omegaconf import OmegaConf
 # if streamlit_running == False:
 #     print('streamlit is not running')
 
+
 # The QAchains class
 class QAchains:
     """
@@ -26,7 +27,8 @@ class QAchains:
     both precision and recall in document retrieval, while maintaining efficiency
     through question shortening and document ranking.
     """
-    def __init__(self, retrievers: Retrievers, config: OmegaConf):        
+
+    def __init__(self, retrievers: Retrievers, config: OmegaConf):
         """
         Initializes the QAchain object.
 
@@ -34,12 +36,12 @@ class QAchains:
             retrievers (Retrievers): The object containing the retrievers.
             config (Config): The configuration object containing the necessary settings.
         """
-                
+
         self.top_k_final = config.Retrieval.top_k_final
         self.verbose = config.settings.verbose
         self.retrievers = retrievers
         modelID = config.llm.openai_modelID
-        self.llm = ChatOpenAI(temperature = 0.0, model=modelID)
+        self.llm = ChatOpenAI(temperature=0.0, model=modelID)
         self.question = None
         self.shortened_question = None
         self.retrieved_docs = None
@@ -60,7 +62,7 @@ class QAchains:
         Raises:
             Exception: If there is an error during the generation of the shortened question, an error message is displayed.
         """
-        
+
         shortening_prompt = """
         You are an expert financial advisor tasked with shortening the original question. 
         Your role is to reformulate the original question to short phrases with essential keywords.
@@ -71,10 +73,10 @@ class QAchains:
         Original Question: "{original_question}"
 
         Reformulated phrases: """
-        
-        try:                        
+
+        try:
             custom_short_prompt = PromptTemplate.from_template(shortening_prompt)
-                        
+
             shortening_chain = (
                 {"original_question": RunnablePassthrough()}
                 | custom_short_prompt
@@ -88,7 +90,7 @@ class QAchains:
                 st.success(f"The shortened question:\n {shortened_question}")
             else:
                 print(f"The shortened question:\n {shortened_question}")
-            
+
             self.question = question
             self.shortened_question = shortened_question
 
@@ -97,7 +99,7 @@ class QAchains:
                 st.error(f"Failed to generate shortened question: {e}")
             else:
                 print(f"Failed to generate shortened question: {e}")
-    
+
     def retrieve_context(self) -> None:
         """
         Retrieves and processes relevant context from documents using a two-stage retrieval approach.
@@ -120,52 +122,86 @@ class QAchains:
             top_k_final = self.top_k_final
 
             # retrieve relevant small chunks
-            small_chunks_retrieved = self.retrievers.retrieve_small_chunks(shortened_question)
+            small_chunks_retrieved = self.retrievers.retrieve_small_chunks(
+                shortened_question
+            )
             if is_streamlit_running():
                 st.success("The small chunks were retrieved")
             else:
                 print("The small chunks were retrieved")
 
             # Calculate DRS for all documents
-            documents_selected, DRS_selected_normalized = self.retrievers.calculate_drs(small_chunks_retrieved)
+            documents_selected, DRS_selected_normalized = self.retrievers.calculate_drs(
+                small_chunks_retrieved
+            )
             if is_streamlit_running():
                 st.success("The DRS was calculated for relevant PDF documents")
             else:
                 print("The DRS was calculated for relevant PDF documents")
 
             # retrieve relevant large chunks
-            large_chunks_retrieved = self.retrievers.retrieve_large_chunks(question, documents_selected)
+            large_chunks_retrieved = self.retrievers.retrieve_large_chunks(
+                question, documents_selected
+            )
             if is_streamlit_running():
                 st.success("The large chunks were retrieved")
             else:
                 print("The large chunks were retrieved")
 
             # Calculate aggregated scores for small and large chunks
-            small_chunks_agg_score = self.retrievers.score_aggregate(small_chunks_retrieved, DRS_selected_normalized)
+            small_chunks_agg_score = self.retrievers.score_aggregate(
+                small_chunks_retrieved, DRS_selected_normalized
+            )
             if self.verbose:
-                print("\n === The aggregated scores were calculated for relevant small chunks ==")
+                print(
+                    "\n === The aggregated scores were calculated for relevant small chunks =="
+                )
                 for doc in small_chunks_agg_score:
-                    print(doc.metadata['aggregated_score'], doc.metadata['name'], doc.metadata['page'], doc.page_content[:20])
-            
-            large_chunks_agg_score = self.retrievers.score_aggregate(large_chunks_retrieved, DRS_selected_normalized)
-            
+                    print(
+                        doc.metadata["aggregated_score"],
+                        doc.metadata["name"],
+                        doc.metadata["page"],
+                        doc.page_content[:20],
+                    )
+
+            large_chunks_agg_score = self.retrievers.score_aggregate(
+                large_chunks_retrieved, DRS_selected_normalized
+            )
+
             if self.verbose:
-                print("\n === The aggregated scores were calculated for relevant large chunks ==")
+                print(
+                    "\n === The aggregated scores were calculated for relevant large chunks =="
+                )
                 for doc in large_chunks_agg_score:
-                    print(doc.metadata['aggregated_score'], doc.metadata['name'], doc.metadata['page'], doc.page_content[:20])
+                    print(
+                        doc.metadata["aggregated_score"],
+                        doc.metadata["name"],
+                        doc.metadata["page"],
+                        doc.page_content[:20],
+                    )
 
             if is_streamlit_running():
-                st.success("The aggregated scores were calculated for all retrieved chunks")
+                st.success(
+                    "The aggregated scores were calculated for all retrieved chunks"
+                )
             else:
                 print("The aggregated scores were calculated for all retrieved chunks")
 
             # concatenate best small and large chunks
-            top_score_docs = large_chunks_agg_score[:top_k_final] + small_chunks_agg_score[:top_k_final][::-1]
-            
+            top_score_docs = (
+                large_chunks_agg_score[:top_k_final]
+                + small_chunks_agg_score[:top_k_final][::-1]
+            )
+
             if self.verbose:
                 print("\n === The top score chunks were concatenated ==")
                 for doc in top_score_docs:
-                    print(doc.metadata['aggregated_score'], doc.metadata['name'], doc.metadata['page'], doc.page_content[:20])            
+                    print(
+                        doc.metadata["aggregated_score"],
+                        doc.metadata["name"],
+                        doc.metadata["page"],
+                        doc.page_content[:20],
+                    )
 
             if is_streamlit_running():
                 st.success("The top score chunks were concatenated")
@@ -176,7 +212,7 @@ class QAchains:
 
         except Exception as e:
             if is_streamlit_running():
-                st.error(f"Failed to retrieve context for the input quersion: {e}")            
+                st.error(f"Failed to retrieve context for the input quersion: {e}")
             else:
                 print(f"Failed to retrieve context for the input quersion: {e}")
 
@@ -210,8 +246,10 @@ class QAchains:
         try:
             custom_rag_prompt = PromptTemplate.from_template(system_prompt)
             chain = custom_rag_prompt | self.llm | StrOutputParser()
-            
-            context = "\ndocument_separator: <<<<>>>>>\n".join(doc.page_content for doc in self.top_score_docs)
+
+            context = "\ndocument_separator: <<<<>>>>>\n".join(
+                doc.page_content for doc in self.top_score_docs
+            )
             response = chain.invoke({"context": context, "question": self.question})
             self.response = response.strip()
             return self.response

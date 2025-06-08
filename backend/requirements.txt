@@ -8,3 +8,4 @@ pandas
 hydra-core
 pypdf
 rank-bm25
+ruff

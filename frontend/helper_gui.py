@@ -11,15 +11,15 @@ from backend.my_lib.qa_chains import QAchains
 def pdf_uploader_ui() -> str | None:
     """
     Display the PDF uploader UI block with input field and submit button.
-    
+
     This function renders a text input for users to enter a directory path containing
     PDF files and a submit button to validate the path. It checks if the provided
     path is a valid directory and displays appropriate error messages if not.
-    
+
     Returns:
-        str or None: The valid directory path if the submit button is clicked and 
+        str or None: The valid directory path if the submit button is clicked and
                     the path is valid, otherwise None.
-    
+
     Side Effects:
         - Displays Streamlit UI components (header, text_input, button)
         - Shows error messages via st.error() for invalid paths
@@ -27,15 +27,18 @@ def pdf_uploader_ui() -> str | None:
     st.header("1. Upload PDF Documents")
     pdf_path = st.text_input(
         "Enter the path to the folder containing your PDF files:",
-        value="data/sample_pdfs/"
+        value="data/sample_pdfs/",
     )
 
     if st.button("Submit PDFs"):
         if pdf_path and os.path.isdir(pdf_path):
             return pdf_path
         else:
-            st.error("Cannot find PDF files in the directory. Please select a directory with PDF files.")
+            st.error(
+                "Cannot find PDF files in the directory. Please select a directory with PDF files."
+            )
     return None
+
 
 # ===============================
 # Question input and output
@@ -43,22 +46,22 @@ def pdf_uploader_ui() -> str | None:
 def question_input_output_ui(qa_chains: QAchains) -> tuple[str, str | None]:
     """
     Handle user question input and process the question through the QA pipeline.
-    
+
     This function displays a text input for users to enter questions, processes
     the question when submitted, and returns both the question and generated answer.
     It provides user feedback during processing and error handling.
-    
+
     Args:
         config: Configuration object containing system settings and parameters.
         retrievers: Retrievers object for document retrieval operations.
         qa_chains (QAchains): Initialized QA chains object for question processing.
         qa_history (list): List of previous question-answer pairs for context.
-    
+
     Returns:
         tuple: A tuple containing:
             - question (str): The trimmed user question
             - answer (str or None): The generated answer, or None if processing failed
-    
+
     Side Effects:
         - Displays Streamlit UI components (text_input, button)
         - Shows processing spinners during question processing
@@ -66,9 +69,9 @@ def question_input_output_ui(qa_chains: QAchains) -> tuple[str, str | None]:
     """
     question = st.text_input(
         "Enter your question related to the uploaded documents:",
-        value='''What are the expectations for the Federal Reserve's interest rate cuts 
+        value="""What are the expectations for the Federal Reserve's interest rate cuts 
 according to David Sekera, and how do these expectations relate to the 
-upcoming Fed meetings and inflation data?'''
+upcoming Fed meetings and inflation data?""",
     )
 
     answer = None
@@ -86,32 +89,32 @@ upcoming Fed meetings and inflation data?'''
 def process_question(question: str, qa_chains: QAchains) -> str | None:
     """
     Process a user question through the complete QA pipeline.
-    
+
     This function handles the full question-answering workflow including question
     shortening, context retrieval, and answer generation. It provides visual
     feedback to users during each stage and handles any processing errors gracefully.
-    
+
     Args:
         question (str): The user's question to be processed.
         qa_chains (QAchains): Initialized QA chains object containing the processing
                              pipeline including retrievers and language models.
-    
+
     Returns:
-        str or None: The generated answer string if processing succeeds, 
+        str or None: The generated answer string if processing succeeds,
                     None if an error occurs during processing.
-    
+
     Side Effects:
         - Updates qa_chains internal state (shortened_question, retrieved_docs, etc.)
         - Displays processing spinners for each pipeline stage
         - Shows error messages via st.error() if processing fails
         - In debug mode, returns a placeholder answer without actual processing
-    
+
     Raises:
         Exception: Any exception during QA processing is caught and displayed
                   to the user, with None returned as the result.
     """
     if st.session_state.debug:
-        answer = 'It\'s placeholder answer for debugging ' * 5
+        answer = "It's placeholder answer for debugging " * 5
         return answer
     try:
         with st.spinner("Shortening question..."):
@@ -126,40 +129,43 @@ def process_question(question: str, qa_chains: QAchains) -> str | None:
     except Exception as e:
         st.error(f"An error occurred while processing the question: {e}")
         answer = None
-    
+
     return answer
+
 
 # ===============================
 # Display results
 # ===============================
-def display_results_ui(answer: str | None, qa_history: list[tuple[str, str]] | None) -> None:
+def display_results_ui(
+    answer: str | None, qa_history: list[tuple[str, str]] | None
+) -> None:
     """
     Display the current answer and Q&A history in the Streamlit sidebar.
-    
+
     This function renders a sidebar panel showing the most recent answer and
     a collapsible history of all previous question-answer pairs. It provides
     a clean, organized view of results that doesn't interfere with the main
     application workflow.
-    
+
     Args:
         answer (str or None): The current answer to display. If None or empty,
                              no current answer section is shown.
         qa_history (list or None): List of tuples containing (question, answer) pairs
                                   representing the conversation history. If None or empty,
                                   no history section is shown.
-    
+
     Side Effects:
         - Renders UI components in the Streamlit sidebar
         - Creates expandable sections for history viewing
         - Displays formatted question-answer pairs with separators
-    
+
     Note:
         The function uses st.sidebar context manager to ensure all components
         are rendered in the sidebar rather than the main content area.
     """
     with st.sidebar:
         st.header("📋 Results")
-        
+
         if answer:
             st.subheader("💡 Current Answer")
             # Use smaller text area or expander

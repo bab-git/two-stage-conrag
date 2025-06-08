@@ -65,50 +65,59 @@ two-stage-conrag/
 └── README.md # Project overview
 ```
 
-## Installation and Setup
+Here is a **polished and professional version** of your `README.md` installation and usage section — with clean formatting, consistent tone, and minimal redundancy, while keeping all the critical information:
 
-### Setup Instructions
+---
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/yourusername/two-stage-conrag.git
-   cd two-stage-conrag
-   ```
+## 🚀 Installation and Setup
 
-2. **Python Environment Setup**:
-Ensure you have Python 3.12.0 installed. You can install it using [pyenv](https://github.com/pyenv/pyenv):
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/two-stage-conrag.git
+cd two-stage-conrag
+```
+
+### 2. Python Environment Setup
+
+Ensure Python 3.12.0 is installed. If needed, use [pyenv](https://github.com/pyenv/pyenv):
+
 ```bash
 pyenv install 3.12.0
 pyenv local 3.12.0
 ```
 
-3. **Create and Activate a Virtual Environment**:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   ```
-4. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-5. **Set Up Environment Variables**:
-   - Copy `.env_example` to `.env` and set your `OPENAI_API_KEY`.
+### 3. Configure Environment Variables
 
-## Secrets
-You need to set an API key in the `.env` file as environment variable to use Openai (or other LLMs) via API calls.
+Copy the template file and set your API keys:
 
-Using LangSmith (and adding its env variables) is optional, but it is highly recommended for training and development purposes. 
+```bash
+cp .env_example .env
+```
 
-## Usage
+Then edit `.env` and add your `OPENAI_API_KEY` (required).
+You may also include a `LANGCHAIN_API_KEY` if you're using LangSmith for debugging or tracing.
+
+
+### 4. Setup Virtual Environment
+```bash
+make env                   # Set up virtual environment and install dependencies
+```
+
+---
+
+## 🧪 Usage
 
 ### Running the Application
 
-- Launch the application using Streamlit:
-  ```bash
-  streamlit run frontend/app.py --server.fileWatcherType none
-  ```
-  (Optional flag --server.fileWatcherType none disables Streamlit's file watching mechanism to reduce CPU usage or prevent reload issues in large or mounted directories.)
-- Navigate to the provided URL (usually `http://localhost:8501`) to access the dashboard.
+Once your environment is ready:
+
+```bash
+source .venv/bin/activate  # Activate the environment manually
+make run                   # Launch the Streamlit app
+```
+
+Then visit [http://localhost:8501](http://localhost:8501) in your browser to use the dashboard.
 
 ### Using the Application
 
@@ -121,6 +130,8 @@ The repository includes a sample PDF dataset located in the `data/sample_pdfs/` 
 **Note:** These sample PDF files are sourced from [Morningstar](https://www.morningstar.com/) website, containing market predictions and reviews. They are included solely for demonstration and testing purposes.
 
 For a more extensive test, a full-scale PDF dataset (approximately 150 MB) is available. You can download it from this [Google Drive link](https://drive.google.com/drive/u/0/folders/1589yvpk4M4uMmMqOE-jjZ73WoptuvPdV).
+
+---
 
 ## Future Enhancements
 
