@@ -8,13 +8,13 @@ splitter:
 
 # LLMs Configuration
 llm:
-  openai_modelID : "gpt-4o" #gpt-4o-mini
+  openai_modelID : "gpt-4o-mini" #or gpt-4o
   # embed_model_id: 'sentence-transformers/all-mpnet-base-v2'
   embed_model_id: sentence-transformers/all-MiniLM-L12-v2 # embedding model for creating vector database for semantic search
 
 Vectorstore:  
   collection_name: large_chunks
-  persist_directory : 'chromadb'
+  persist_directory : 'vector_store'
 
 Retrieval:
   semantic_CE_model : cross-encoder/stsb-TinyBERT-L-4 # cross encoder for similarity scoring of semantic search retults. The models are optimized for semantic similarity

@@ -1,6 +1,7 @@
 # Data folders
 data/
 chroma*/
+vector_store/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -26,3 +27,7 @@ Thumbs.db
 
 # temprory files
 temp*
+TODO*
+
+# hydra outputs
+outputs/
