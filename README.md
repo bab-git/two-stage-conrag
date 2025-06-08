@@ -1,5 +1,10 @@
 # Two-Stage Consecutive RAG System for Document QA: Enhancing Precision and Scalability
 
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![LangChain](https://img.shields.io/badge/Library-LangChain-orange)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-green)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
+
 <img src="photo.png" alt="Screenshot of the PDF Question Answering" width="1000"/>
 *Figure: Screenshot of the PDF Question Answering System Dashboard.*
 
