@@ -12,6 +12,11 @@ from backend.settings import validate_env_secrets
 
 from helper_gui import pdf_uploader_ui, question_input_output_ui, display_results_ui
 
+# logging from backend
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def initialize_session_state() -> None:
     """
@@ -26,6 +31,7 @@ def initialize_session_state() -> None:
     st.session_state.setdefault("qa_chains", None)
     st.session_state.setdefault("answer", "")
     st.session_state.setdefault("qa_history", [])
+    logger.debug("Session state initialized.")
 
 
 @st.cache_resource
@@ -40,6 +46,8 @@ def vector_store_builder(
         config (OmegaConf): Configuration object.
     """
 
+    logger.info("Building vector store for PDFs at path: %s", pdf_path)
+
     # Step 1: Load and chunk
     pdf_manager = PDFManager(pdf_path, _config)
     pdf_manager.load_pdfs()
@@ -52,6 +60,7 @@ def vector_store_builder(
     retrievers = Retrievers(pdf_manager, _config)
     retrievers.setup_retrievers()
 
+    logger.info("Vector store and retrievers created successfully.")
     return pdf_manager, retrievers
 
 
@@ -83,11 +92,14 @@ def main() -> None:
     Returns:
         None
     """
+    logger.info("Starting Streamlit app")
+
     # Display the image at the top of the app
     st.image("frontend/static/image.jpeg", use_container_width=True)
 
     # Load configuration using OmegaConf
     config = OmegaConf.load("configs/config.yaml")
+    logger.info("Configuration loaded successfully.")
     # print(config)
 
     st.title("Two-Stage RAG System for PDF Question Answering")
@@ -98,19 +110,23 @@ def main() -> None:
 
     # Initialize session state variables
     initialize_session_state()
+    logger.info("Session state initialized successfully.")
 
     if st.session_state.debug:
         st.warning("DEBUG MODE is ON")
+        logger.debug("Debug mode is enabled.")
 
     if not st.session_state.get("env_validated"):
         validate_env_secrets()
         st.session_state.env_validated = True
+        logger.info("Environment secrets validated successfully.")
         # st.success("Environment secrets validated successfully!")
 
     # 1) PDF Upload and vector store creation
     pdf_path = pdf_uploader_ui()
     # Create vector store and retrievers only if the pdfs are uploaded successfully
     if pdf_path is not None:
+        logger.info("PDF path provided: %s", pdf_path)
         if st.session_state.debug:
             st.write("pdfs path:", pdf_path)
 
@@ -118,6 +134,7 @@ def main() -> None:
             st.info(
                 "Vector store is already built - you can proceed to ask your question"
             )
+            logger.info("Vector store already built, skipping creation.")
         pdf_manager, retrievers = vector_store_builder(pdf_path, config)
         st.session_state.pdf_manager = pdf_manager
         st.session_state.retrievers = retrievers
@@ -133,12 +150,14 @@ def main() -> None:
         if answer is not None:
             st.session_state.answer = answer
             st.session_state.qa_history.append((question, answer))
+            logger.info("Question answered: %s, answer: %s", question, answer)
 
     # 3) Display answer & history
     display_results_ui(
         answer=st.session_state.answer,
         qa_history=st.session_state.qa_history,
     )
+    logger.info("Displayed results and history.")
 
 
 if __name__ == "__main__":

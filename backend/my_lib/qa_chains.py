@@ -7,6 +7,10 @@ from langchain_core.runnables import RunnablePassthrough
 from backend.settings import is_streamlit_running
 from omegaconf import OmegaConf
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # streamlit_running = is_streamlit_running()
 # if streamlit_running == False:
 #     print('streamlit is not running')
@@ -89,7 +93,7 @@ class QAchains:
             if is_streamlit_running():
                 st.success(f"The shortened question:\n {shortened_question}")
             else:
-                print(f"The shortened question:\n {shortened_question}")
+                logger.info(f"The shortened question:\n {shortened_question}")
 
             self.question = question
             self.shortened_question = shortened_question
@@ -98,7 +102,7 @@ class QAchains:
             if is_streamlit_running():
                 st.error(f"Failed to generate shortened question: {e}")
             else:
-                print(f"Failed to generate shortened question: {e}")
+                logger.error(f"Failed to generate shortened question: {e}")
 
     def retrieve_context(self) -> None:
         """
@@ -128,7 +132,7 @@ class QAchains:
             if is_streamlit_running():
                 st.success("The small chunks were retrieved")
             else:
-                print("The small chunks were retrieved")
+                logger.info("The small chunks were retrieved")
 
             # Calculate DRS for all documents
             documents_selected, DRS_selected_normalized = self.retrievers.calculate_drs(
@@ -137,7 +141,7 @@ class QAchains:
             if is_streamlit_running():
                 st.success("The DRS was calculated for relevant PDF documents")
             else:
-                print("The DRS was calculated for relevant PDF documents")
+                logger.info("The DRS was calculated for relevant PDF documents")
 
             # retrieve relevant large chunks
             large_chunks_retrieved = self.retrievers.retrieve_large_chunks(
@@ -146,18 +150,18 @@ class QAchains:
             if is_streamlit_running():
                 st.success("The large chunks were retrieved")
             else:
-                print("The large chunks were retrieved")
+                logger.info("The large chunks were retrieved")
 
             # Calculate aggregated scores for small and large chunks
             small_chunks_agg_score = self.retrievers.score_aggregate(
                 small_chunks_retrieved, DRS_selected_normalized
             )
             if self.verbose:
-                print(
+                logger.info(
                     "\n === The aggregated scores were calculated for relevant small chunks =="
                 )
                 for doc in small_chunks_agg_score:
-                    print(
+                    logger.info(
                         doc.metadata["aggregated_score"],
                         doc.metadata["name"],
                         doc.metadata["page"],
@@ -169,11 +173,11 @@ class QAchains:
             )
 
             if self.verbose:
-                print(
+                logger.info(
                     "\n === The aggregated scores were calculated for relevant large chunks =="
                 )
                 for doc in large_chunks_agg_score:
-                    print(
+                    logger.info(
                         doc.metadata["aggregated_score"],
                         doc.metadata["name"],
                         doc.metadata["page"],
@@ -185,7 +189,9 @@ class QAchains:
                     "The aggregated scores were calculated for all retrieved chunks"
                 )
             else:
-                print("The aggregated scores were calculated for all retrieved chunks")
+                logger.info(
+                    "The aggregated scores were calculated for all retrieved chunks"
+                )
 
             # concatenate best small and large chunks
             top_score_docs = (
@@ -194,9 +200,9 @@ class QAchains:
             )
 
             if self.verbose:
-                print("\n === The top score chunks were concatenated ==")
+                logger.info("\n === The top score chunks were concatenated ==")
                 for doc in top_score_docs:
-                    print(
+                    logger.info(
                         doc.metadata["aggregated_score"],
                         doc.metadata["name"],
                         doc.metadata["page"],
@@ -206,7 +212,7 @@ class QAchains:
             if is_streamlit_running():
                 st.success("The top score chunks were concatenated")
             else:
-                print("The top score chunks were concatenated")
+                logger.info("The top score chunks were concatenated")
 
             self.top_score_docs = top_score_docs
 
@@ -214,7 +220,7 @@ class QAchains:
             if is_streamlit_running():
                 st.error(f"Failed to retrieve context for the input quersion: {e}")
             else:
-                print(f"Failed to retrieve context for the input quersion: {e}")
+                logger.error(f"Failed to retrieve context for the input quersion: {e}")
 
     def generate_answer(self) -> str:
         """
@@ -257,4 +263,4 @@ class QAchains:
             if is_streamlit_running():
                 st.error(f"Failed to generate answer: {e}")
             else:
-                print(f"Failed to generate answer: {e}")
+                logger.error(f"Failed to generate answer: {e}")

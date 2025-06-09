@@ -8,6 +8,10 @@ from backend.settings import is_streamlit_running
 from omegaconf import OmegaConf
 from langchain_core.documents import Document
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # streamlit_running = is_streamlit_running()
 
 
@@ -57,7 +61,7 @@ class Retrievers:
             if is_streamlit_running():
                 st.error("No small_chunks to index. Please load PDFs first.")
             else:
-                print("No small_chunks to index. Please load PDFs first.")
+                logger.warning("No small_chunks to index. Please load PDFs first.")
             return
         try:
             self.retriever_small = BM25Retriever.from_documents(
@@ -69,12 +73,12 @@ class Retrievers:
             if is_streamlit_running():
                 st.success("Retrievers created successfully.")
             else:
-                print("Retrievers created successfully.")
+                logger.info("Retrievers created successfully.")
         except Exception as e:
             if is_streamlit_running():
                 st.error(f"Failed to create retrievers: {e}")
             else:
-                print(f"Failed to create retrievers: {e}")
+                logger.error(f"Failed to create retrievers: {e}")
 
     def retrieve_small_chunks(self, shortened_question: str) -> list[Document]:
         """
@@ -108,10 +112,10 @@ class Retrievers:
 
             # for debugging:
             if self.verbose:
-                print("\n", len(small_chunks_retrieved), "small chunks retrieved")
-                print("\n ==== Samples of retrieved small chunks ==== \n")
+                logger.info("\n", len(small_chunks_retrieved), "small chunks retrieved")
+                logger.info("\n ==== Samples of retrieved small chunks ==== \n")
                 for chunk in small_chunks_retrieved[:3]:
-                    print(
+                    logger.info(
                         chunk.metadata["name"],
                         f"page:{chunk.metadata['page']}",
                         f"score:{chunk.metadata['score']}",
@@ -124,7 +128,7 @@ class Retrievers:
             if is_streamlit_running():
                 st.error(f"Failed to retrieve small chunks: {e}")
             else:
-                print(f"Failed to retrieve small chunks: {e}")
+                logger.error(f"Failed to retrieve small chunks: {e}")
             return None
 
     def calculate_drs(
@@ -152,7 +156,7 @@ class Retrievers:
 
         pos_score = any(chunk.metadata["score"] > 0 for chunk in small_chunks_retrieved)
         if not pos_score:
-            print("\n No small chunk retrieved with a positive score \n")
+            logger.warning("\n No small chunk retrieved with a positive score \n")
 
         DRS_documents = defaultdict(lambda: {"N": 0, "sum_score": 0, "score": 0})
 
@@ -182,9 +186,9 @@ class Retrievers:
             )
 
             if self.verbose:
-                print("\n ==== Sorted DRS documents ====")
+                logger.info("\n ==== Sorted DRS documents ====")
                 for doc in DRS_documents_sorted:
-                    print(doc[0], f'score:{doc[1]['score']}, N:{doc[1]["N"]}')
+                    logger.info(doc[0], f'score:{doc[1]['score']}, N:{doc[1]["N"]}')
 
             # selecting documents
             documents_selected = [
@@ -192,9 +196,9 @@ class Retrievers:
             ]
 
             if self.verbose:
-                print("\n ==== Selected documents ====")
+                logger.info("\n ==== Selected documents ====")
                 for document in documents_selected:
-                    print(document)
+                    logger.info(document)
 
             # normalized DRS: divide DRS by max DRS
             DRS_selected = DRS_documents_sorted[: self.top_k_documents]
@@ -209,7 +213,7 @@ class Retrievers:
             if is_streamlit_running():
                 st.error(f"Failed to calculate DRS for PDF documents: {e}")
             else:
-                print(f"Failed to calculate DRS for PDF documents: {e}")
+                logger.error(f"Failed to calculate DRS for PDF documents: {e}")
             return None
 
     def score_aggregate(
@@ -248,7 +252,7 @@ class Retrievers:
                     f"Failed to aggregate similarity scores for retrieved chunks: {e}"
                 )
             else:
-                print(
+                logger.error(
                     f"Failed to aggregate similarity scores for retrieved chunks: {e}"
                 )
             return None
@@ -272,11 +276,11 @@ class Retrievers:
             )
 
             if self.verbose:
-                print(
+                logger.info(
                     f"\n ==== {len(large_chunks_retrieved)} Retrieved large chunks ==== \n"
                 )
                 for chunk in large_chunks_retrieved:
-                    print(
+                    logger.info(
                         f'name: {chunk.metadata["name"]}, page: {chunk.metadata["page"]}, page_content: {chunk.page_content[:10]}'
                     )
 
@@ -285,13 +289,13 @@ class Retrievers:
             ranks = self.CE_model_semantic.rank(question, passages)
 
             # print("question:", question)
-            print("\n ==== Ranked retrieved large chunks ==== \n")
+            logger.info("\n ==== Ranked retrieved large chunks ==== \n")
             for rank in ranks:
                 large_chunks_retrieved[rank["corpus_id"]].metadata["score"] = rank[
                     "score"
                 ]
                 if self.verbose:
-                    print(
+                    logger.info(
                         f"{rank['score']:.2f}\t{large_chunks_retrieved[rank['corpus_id']].metadata}, {large_chunks_retrieved[rank['corpus_id']].page_content[:10]} "
                     )
 
@@ -301,5 +305,5 @@ class Retrievers:
             if is_streamlit_running():
                 st.error(f"Failed to retrieve large chunks: {e}")
             else:
-                print(f"Failed to retrieve large chunks: {e}")
+                logger.error(f"Failed to retrieve large chunks: {e}")
             return None

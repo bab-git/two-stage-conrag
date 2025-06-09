@@ -4,6 +4,11 @@ import streamlit as st
 import os
 from backend.my_lib.qa_chains import QAchains
 
+# logging configured in backend/settings.py
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # ===============================
 # PDF uploader
@@ -32,11 +37,13 @@ def pdf_uploader_ui() -> str | None:
 
     if st.button("Submit PDFs"):
         if pdf_path and os.path.isdir(pdf_path):
+            logger.info("PDF path submitted: %s", pdf_path)
             return pdf_path
         else:
             st.error(
                 "Cannot find PDF files in the directory. Please select a directory with PDF files."
             )
+            logger.warning("Invalid PDF path submitted: %s", pdf_path)
     return None
 
 
@@ -77,9 +84,11 @@ upcoming Fed meetings and inflation data?""",
     answer = None
     if st.button("Submit Question"):
         if question.strip():
+            logger.info("Question submitted: %s", question)
             answer = process_question(question, qa_chains)
         else:
             st.error("Please enter a question.")
+            logger.warning("Empty question submitted.")
     return question.strip(), answer
 
 
@@ -115,19 +124,24 @@ def process_question(question: str, qa_chains: QAchains) -> str | None:
     """
     if st.session_state.debug:
         answer = "It's placeholder answer for debugging " * 5
+        logger.debug("Debug mode active, returning placeholder answer.")
         return answer
     try:
         with st.spinner("Shortening question..."):
             qa_chains.shorten_question(question)
+            logger.info("Question shortened successfully.")
 
         with st.spinner("Searching for relevant documents..."):
             qa_chains.retrieve_context()
+            logger.info("Context retrieved successfully.")
 
         with st.spinner("Generating answer..."):
             answer = qa_chains.generate_answer()
+            logger.info("Answer generated successfully.")
 
     except Exception as e:
         st.error(f"An error occurred while processing the question: {e}")
+        logger.error("Error during question processing: %s", e)
         answer = None
 
     return answer
@@ -170,6 +184,7 @@ def display_results_ui(
             st.subheader("💡 Current Answer")
             # Use smaller text area or expander
             st.text_area("Your Answer:", value=answer, height=200, key="sidebar_answer")
+            logger.info("Displayed current answer.")
             # with st.expander("View Full Answer", expanded=False):
             #     st.write(answer)
 
@@ -182,3 +197,4 @@ def display_results_ui(
                     st.markdown(f"**A{idx}:** {a}")
                     # st.markdown(f"**A{idx}:** {a[:100]}{'...' if len(a) > 100 else ''}")  # Truncate long answers
                     st.markdown("---")
+            logger.info("Displayed Q&A history.")

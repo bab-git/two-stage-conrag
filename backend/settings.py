@@ -1,6 +1,24 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 from streamlit.runtime.scriptrunner import get_script_run_ctx
+import logging
+from pathlib import Path
+
+# Define logs directory and log file path
+LOG_DIR = Path(__file__).parent.parent / "logs"
+LOG_DIR.mkdir(exist_ok=True)  # create logs/ if it doesn't exist
+log_file = LOG_DIR / "app.log"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    handlers=[
+        logging.StreamHandler(),  # console
+        logging.FileHandler(log_file, mode="w"),  # single file
+    ],
+)
+
+logger = logging.getLogger(__name__)
 
 # Load secrets from .env
 load_dotenv(find_dotenv(), override=True)
@@ -27,7 +45,7 @@ def validate_env_secrets():
         raise RuntimeError("Invalid or missing OPENAI_API_KEY.")
 
     if lang_key := os.getenv("LANGCHAIN_API_KEY"):
-        print(f"LangSmith key loaded (ends with {lang_key[-10:]})")
+        logger.info(f"LangSmith key loaded (ends with {lang_key[-10:]})")
 
 
 # Find if streamlit is running
@@ -41,12 +59,12 @@ def is_streamlit_running() -> bool:
     try:
         return get_script_run_ctx() is not None
     except Exception as e:
-        print(f"Error checking if Streamlit is running: {e}")
+        logger.error(f"Error checking if Streamlit is running: {e}")
         return False
 
 
 # streamlit_running = is_streamlit_running()
 if is_streamlit_running():
-    print("streamlit is not running")
+    logger.info("streamlit is not running")
 else:
-    print("streamlit is running")
+    logger.info("streamlit is running")

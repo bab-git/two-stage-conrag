@@ -8,6 +8,10 @@ from langchain_community.document_loaders import PyPDFLoader
 from omegaconf import OmegaConf
 import chromadb
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # ------------------------------
 # Define the PDFManager class
@@ -84,7 +88,7 @@ class PDFManager:
                 if is_streamlit_running():
                     st.warning("No PDF files found in the specified directory.")
                 else:
-                    print("No PDF files found in the specified directory.")
+                    logger.warning("No PDF files found in the specified directory.")
                 return
 
             docs = []
@@ -102,14 +106,14 @@ class PDFManager:
                     f"Total document pages loaded: {len(self.documents)} from {self.pdf_path}"
                 )
             else:
-                print(
+                logger.info(
                     f"Total document pages loaded: {len(self.documents)} from {self.pdf_path}"
                 )
         except Exception as e:
             if is_streamlit_running():
                 st.error(f"Failed to load PDF files: {e}")
             else:
-                print(f"Failed to load PDF files: {e}")
+                logger.error(f"Failed to load PDF files: {e}")
             return
 
     def chunk_documents(self) -> None:
@@ -129,7 +133,7 @@ class PDFManager:
             if is_streamlit_running():
                 st.error("No documents to split. Please load PDFs first.")
             else:
-                print("No documents to split. Please load PDFs first.")
+                logger.warning("No documents to split. Please load PDFs first.")
             return
 
         try:
@@ -157,14 +161,14 @@ class PDFManager:
                     f"Documents split into {len(self.small_chunks)} small and {len(self.large_chunks)} large chunks."
                 )
             else:
-                print(
+                logger.info(
                     f"Documents split into {len(self.small_chunks)} small and {len(self.large_chunks)} large chunks."
                 )
         except Exception as e:
             if is_streamlit_running():
                 st.error(f"Failed to split documents: {e}")
             else:
-                print(f"Failed to split documents: {e}")
+                logger.error(f"Failed to split documents: {e}")
 
     def create_vectorstore(self) -> None:
         """
@@ -184,7 +188,7 @@ class PDFManager:
             if is_streamlit_running():
                 st.error("No documents to index. Please load PDFs first.")
             else:
-                print("No documents to index. Please load PDFs first.")
+                logger.warning("No documents to index. Please load PDFs first.")
             return
 
         try:
@@ -193,9 +197,9 @@ class PDFManager:
             chroma_client = chromadb.PersistentClient(path=self.persist_directory)
             try:
                 chroma_client.delete_collection(self.collection_name)
-                print(f"Collection {self.collection_name} is deleted")
+                logger.info(f"Collection {self.collection_name} is deleted")
             except Exception:
-                print(f"Collection {self.collection_name} does not exist")
+                logger.warning(f"Collection {self.collection_name} does not exist")
             # print(len(chunks))
             self.vectorstore = Chroma.from_documents(
                 documents=self.large_chunks,
@@ -211,11 +215,11 @@ class PDFManager:
                     f"Vectorstore {self.collection_name} created successfully with {collection.count()} documents."
                 )
             else:
-                print(
+                logger.info(
                     f"Vectorstore {self.collection_name} created successfully with {collection.count()} documents."
                 )
         except Exception as e:
             if is_streamlit_running():
                 st.error(f"Failed to create vectorstore: {e}")
             else:
-                print(f"Failed to create vectorstore: {e}")
+                logger.error(f"Failed to create vectorstore: {e}")
