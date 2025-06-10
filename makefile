@@ -20,10 +20,23 @@ run:
 	streamlit run frontend/app.py --server.fileWatcherType none
 
 # Set up virtual environment
-env:
-	python -m venv .venv && source .venv/bin/activate && \
+env-dev:
+	@echo "Setting up virtual environment for development"
+	python -m venv .venv
+	. .venv/bin/activate && \
 	pip install -r backend/requirements.txt && \
-	pip install -r frontend/requirements.txt
+	pip install -r frontend/requirements.txt && \
+	pip install -r requirements-dev.txt && \
+	pip install -e .
+
+# Set up virtual environment for production
+env:
+	@echo "Setting up virtual environment for production"
+	python -m venv .venv
+	. .venv/bin/activate && \
+	pip install -r backend/requirements.txt && \
+	pip install -r frontend/requirements.txt && \
+	pip install .
 
 # Code linting
 lint:
@@ -34,8 +47,16 @@ format:
 	black backend frontend scripts
 
 # Run all unit tests
+# run your pytest suite with coverage reporting
 test:
-	pytest tests/
+	@echo "Running tests with pytest…"
+	pytest \
+		--strict-markers \
+		--tb=short \
+		--disable-warnings \
+		--maxfail=1 \
+		--cov=backend \
+		--cov-report=term-missing
 
 # Clean pyc, cache, logs, etc.
 clean:

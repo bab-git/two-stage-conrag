@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "two-stage-conrag"
+version = "0.1.0"
+description = "Two-Stage Consecutive RAG PDF QA System"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Bob Hosseini", email = "bbkhosseini@gmail.com" }]
+requires-python = ">=3.12"
+dependencies = [
+  "streamlit",
+  "chromadb",
+  "langchain-huggingface",
+  "langchain-text-splitters",
+  "langchain-chroma",
+  "sentence-transformers",
+  "omegaconf",
+  "python-dotenv",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["backend*", "backend.my_lib*"]

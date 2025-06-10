@@ -1,33 +1,30 @@
-# Data folders
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Development
+.vscode/
+.idea/
+build/
+dist/
+outputs/
+
+# Environment
+.*env
+*.env
+
+# Data and Storage
 data/
 chroma*/
 vector_store/
 
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environment
-.*env
-
-# IDEs and editors
-.vscode/
-.idea/
-
-# OS files
+# System
 .DS_Store
 Thumbs.db
 
-# Logs
+# Logs and Temporary
 *.log
-
-# Docker
-*.env
-
-# temprory files
 temp*
 TODO*
-
-# hydra outputs
-outputs/
