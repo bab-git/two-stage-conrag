@@ -3,6 +3,10 @@ from langchain_community.retrievers import BM25Retriever
 from backend.my_lib.pdf_manager import PDFManager
 from backend.my_lib.retrievers import Retrievers
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # Hybrid retrieval class
 class Hybrid_Retrieval:
@@ -22,14 +26,16 @@ class Hybrid_Retrieval:
         chunks = self.chunks
 
         if hybrid:
-            print("=== Hybrid Retrieval with BM25 and semantic search ===")
+            logger.info("=== Hybrid Retrieval with BM25 and semantic search ===")
             retriever_kw = BM25Retriever.from_documents(documents=chunks, k=top_k_BM25)
 
             kw_chunks_retrieved = retriever_kw.invoke(question)
             if self.verbose:
-                print(f"Number of retrieved documents: {len(kw_chunks_retrieved)}")
+                logger.info(
+                    f"Number of retrieved documents: {len(kw_chunks_retrieved)}"
+                )
                 for chunk in kw_chunks_retrieved:
-                    print(
+                    logger.info(
                         f'name: {chunk.metadata["name"]}, page: {chunk.metadata["page"]}, page_content: {chunk.page_content[:10]}'
                     )
 
@@ -45,12 +51,12 @@ class Hybrid_Retrieval:
                 for chunk, rank in zip(kw_chunks_retrieved, rank_kw_chunks_retrieved)
             }
             if self.verbose:
-                print("keyword retrieval scores:")
-                print(scores)
-                print("keyword retrieval ranks:")
-                print(rank_kw_dict)
+                logger.info("keyword retrieval scores:")
+                logger.info(scores)
+                logger.info("keyword retrieval ranks:")
+                logger.info(rank_kw_dict)
         else:
-            print("=== Semantic search retrieval only === ")
+            logger.info("=== Semantic search retrieval only === ")
 
         # Retrieval with semantic search
         retriever_large = self.vectorstore.as_retriever(
@@ -63,9 +69,9 @@ class Hybrid_Retrieval:
         rank_large_chunks_retrieved = [rank["corpus_id"] for rank in ranks]
 
         if self.verbose:
-            print(f"Number of retrieved documents: {len(large_chunks_retrieved)}")
+            logger.info(f"Number of retrieved documents: {len(large_chunks_retrieved)}")
             for chunk in large_chunks_retrieved:
-                print(
+                logger.info(
                     f'name: {chunk.metadata["name"]}, page: {chunk.metadata["page"]}, page_content: {chunk.page_content[:10]}'
                 )
 
@@ -94,10 +100,10 @@ class Hybrid_Retrieval:
             rrf_ranks = np.argsort(-np.array(rrf_scores))
 
             if self.verbose:
-                print("\nRRF scores:")
-                print(rrf_scores)
-                print("\nRRF ranks:")
-                print(rrf_ranks[:top_k_final])
+                logger.info("\nRRF scores:")
+                logger.info(rrf_scores)
+                logger.info("\nRRF ranks:")
+                logger.info(rrf_ranks[:top_k_final])
 
             top_score_docs = list()
             for i in range(top_k_final):
@@ -110,9 +116,9 @@ class Hybrid_Retrieval:
                 )
 
         if self.verbose:
-            print(f"Number of retrieved documents: {len(top_score_docs)}")
+            logger.info(f"Number of retrieved documents: {len(top_score_docs)}")
             for chunk in top_score_docs:
-                print(
+                logger.info(
                     f'name: {chunk.metadata["name"]}, page: {chunk.metadata["page"]}, page_content: {chunk.page_content[:10]}'
                 )
 

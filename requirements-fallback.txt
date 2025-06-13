@@ -1,0 +1,15 @@
+# requirements.txt — fallback for environments without Poetry
+# python_version >=3.12,<3.13  # Documented only; pip won't enforce this
+
+langchain==0.3.25
+langchain-openai>=0.3.22
+langchain-community>=0.3.25
+langchain-huggingface>=0.3.0
+langchain-chroma>=0.2.4
+sentence-transformers>=4.1.0
+matplotlib
+pandas
+hydra-core
+pypdf
+rank-bm25
+streamlit>=1.45.1
