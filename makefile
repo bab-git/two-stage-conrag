@@ -37,13 +37,13 @@ run:
 install-dev:
 	@echo "Installing all dependencies (dev + prod) via Poetry"
 	poetry config virtualenvs.in-project true --local
-	poetry install --with dev
+	poetry install
 
 # Create venv & install only production dependencies
 install:
 	@echo "Installing production dependencies only"
 	poetry config virtualenvs.in-project true --local
-	poetry install
+	poetry install --without dev
 
 # Code linting (using Ruff inside the venv)
 lint:
