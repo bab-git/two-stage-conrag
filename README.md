@@ -3,7 +3,10 @@
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
 ![LangChain](https://img.shields.io/badge/Library-LangChain-orange)
 ![Streamlit](https://img.shields.io/badge/UI-Streamlit-green)
+![Poetry](https://img.shields.io/badge/Dependency-Poetry-blueviolet)
+![Docker](https://img.shields.io/badge/Containerized-Docker-blue)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
+
 
 <img src="photo.png" alt="Screenshot of the PDF Question Answering" width="1000"/>
 *Figure: Screenshot of the PDF Question Answering System Dashboard.*
@@ -43,34 +46,35 @@ For a detailed explanation of the system, its design, and performance evaluation
 
 For details on backend components and architecture, see [backend/README.md](backend/README.md).
 
-## Project Structure
+## 🗂️ Project Structure
+
 
 ```
 two-stage-conrag/
-├── backend/ # Core logic: PDF manager, retrievers, QA chains, settings
-│ ├── my_lib/ # Modular pipeline components
-│ ├── settings.py # Env handling and configuration
-│ ├── tools.py # Utility tools
-│ ├── utils.py # General-purpose helpers
-│ └── requirements.txt # Backend dependencies
-├── frontend/ # Streamlit interface (app.py and GUI layout)
-│ ├── app.py
-│ ├── helper_gui.py
-│ └── requirements.txt # Frontend dependencies
-├── vector_store/ # Embedding DB client and index config
-├── configs/ # YAML configuration files
-│ └── config.yaml
-├── data/ # Sample and full-scale PDF sets
-│ └── sample_pdfs/
-├── notebooks/ # Prototyping and experimentation
-├── .env_example # Template for secrets
-├── Dockerfile.* # Docker setup (backend/frontend)
-├── Makefile # Developer CLI shortcuts
-├── requirements.txt # Root-level dependencies
-└── README.md # Project overview
+├── backend/                  # Core logic: PDF manager, retrievers, QA chains, settings
+│   ├── my_lib/              # Modular pipeline components
+│   ├── settings.py
+│   ├── tools.py
+│   ├── utils.py
+│   └── requirements.txt     # Optional backend pip-only fallback
+├── frontend/                # Streamlit interface
+│   ├── app.py
+│   ├── helper_gui.py
+│   └── requirements.txt     # Optional frontend pip-only fallback
+├── vector_store/            # Embedding DB client and index config
+├── configs/                 # YAML configuration files
+│   └── config.yaml
+├── data/                    # Sample and full-scale PDF sets
+│   └── sample_pdfs/
+├── notebooks/               # Prototyping and experimentation
+├── .env_example             # Template for secrets and API keys
+├── Dockerfile               # Production-ready Dockerfile (Poetry-free runtime)
+├── Makefile                 # CLI shortcuts for dev/test/deploy
+├── requirements.txt         # Auto-generated fallback for pip
+├── pyproject.toml           # Poetry project definition
+├── poetry.lock              # Locked dependencies
+└── README.md                # Project overview and instructions
 ```
-
-Here is a **polished and professional version** of your `README.md` installation and usage section — with clean formatting, consistent tone, and minimal redundancy, while keeping all the critical information:
 
 ---
 
@@ -100,20 +104,77 @@ Copy the template file and set your API keys:
 cp .env_example .env
 ```
 
-Then edit `.env` and add your `OPENAI_API_KEY` (required).
-You may also include a `LANGCHAIN_API_KEY` if you're using LangSmith for debugging or tracing.
+Then edit `.env` and add:
 
-
-### 4. Setup Virtual Environment
-```bash
-make env                   # Set up virtual environment and install dependencies
+```env
+OPENAI_API_KEY=your-key-here
+# Optional: LANGCHAIN_API_KEY=your-langsmith-key
 ```
+
+### 4. Install Dependencies (Choose One)
+
+#### ✅ Option A — Recommended: Poetry
+
+> 📦 **Poetry must be installed on your system.**
+> Install it via [official guide](https://python-poetry.org/docs/#installation) or with:
+>
+> ```bash
+> curl -sSL https://install.python-poetry.org | python3 -
+> ```
+
+Once Poetry is available:
+
+```bash
+make install  # Equivalent to: poetry install
+```
+
+This installs dependencies into an isolated virtual environment based on `pyproject.toml`.
+
+> To activate the environment manually:
+>
+> ```bash
+> poetry shell
+> ```
+
+---
+
+#### ⚙️ Option B — Fallback: pip with requirements.txt
+
+If you don’t have Poetry or need a quick pip install:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+> The `requirements.txt` is generated from `poetry.lock` using:
+>
+> ```bash
+> make export-reqs
+> ```
+
+---
+
+#### 🐳 Option C — Run via Docker (Portable)
+
+Build and run the app inside a Docker container:
+
+```bash
+# Build image
+make docker-build
+
+# Run Streamlit app
+make docker-run
+```
+
+This method skips Poetry and uses pip internally with a pinned `requirements.txt` exported from Poetry.
 
 ---
 
 ## 🧪 Usage
 
-### Running the Application
+### Running the Application (Local Environment)
 
 Once your environment is ready:
 
@@ -122,7 +183,14 @@ source .venv/bin/activate  # Activate the environment manually
 make run                   # Launch the Streamlit app
 ```
 
+### Running the Application (Docker)
+
+```bash
+make docker-run
+```
+
 Then visit [http://localhost:8501](http://localhost:8501) in your browser to use the dashboard.
+
 
 ### Using the Application
 

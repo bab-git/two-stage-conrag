@@ -29,3 +29,7 @@ Thumbs.db
 *.log
 temp*
 TODO*
+*.old
+
+# Poetry
+poetry.toml

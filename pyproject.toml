@@ -1,26 +1,55 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.5.0"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
-name = "two-stage-conrag"
-version = "0.1.0"
+[tool.poetry]
+name        = "two-stage-conrag"
+version     = "0.1.0"
 description = "Two-Stage Consecutive RAG PDF QA System"
-readme = "README.md"
-license = { text = "MIT" }
-authors = [{ name = "Bob Hosseini", email = "bbkhosseini@gmail.com" }]
-requires-python = ">=3.12"
-dependencies = [
-  "streamlit",
-  "chromadb",
-  "langchain-huggingface",
-  "langchain-text-splitters",
-  "langchain-chroma",
-  "sentence-transformers",
-  "omegaconf",
-  "python-dotenv",
+authors     = ["Bob Hosseini <bbkhosseini@gmail.com>"]
+license     = "MIT"
+readme      = "README.md"
+package-mode = false
+
+packages = [
+  { include = "backend" },
+  { include = "frontend" }
 ]
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["backend*", "backend.my_lib*"]
+[tool.poetry.dependencies]
+python                  = ">=3.12,<3.13"
+langchain               = "^0.3.25"
+langchain-openai        = "^0.3.22"
+langchain-community     = "^0.3.25"
+langchain-huggingface   = "^0.3.0"
+langchain-chroma        = "^0.2.4"
+sentence-transformers   = "^4.1.0"
+matplotlib              = "^3.10.3"
+pandas                  = "^2.3.0"
+hydra-core              = "^1.3.2"
+pypdf                   = "^5.6.0"
+rank-bm25               = "^0.2.2"
+streamlit               = "^1.45.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest      = "^8.4.0"
+pytest-cov  = "^6.2.0"
+pytest-mock = "^3.14.1"
+black       = "^25.1.0"
+ruff        = "^0.11.13"
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+exclude     = ["__pycache__", "venv", ".venv"]
+
+[tool.ruff.lint]
+# rules to check/fix
+select = ["E", "F"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+addopts   = "-ra"
+testpaths = ["tests"]
