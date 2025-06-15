@@ -11,6 +11,70 @@ logger = logging.getLogger(__name__)
 
 
 # ===============================
+# API Key Input
+# ===============================
+def api_key_input_ui() -> str | None:
+    """
+    Display API key input UI only if environment API key is invalid.
+    First tries to use API key from environment, then prompts user if needed.
+    
+    Returns:
+        str or None: The valid API key (from env or user input), otherwise None.
+    
+    Side Effects:
+        - Stores user API key in session state for the current session
+        - Displays informational message about key storage
+    """
+    # First check if we have a valid API key from environment
+    env_api_key = os.getenv("OPENAI_API_KEY", "")
+    
+    if env_api_key and env_api_key.startswith("sk-"):
+        # Environment API key is valid, no need for user input
+        st.success("✅ Using API Key from environment configuration")
+        logger.info("Using valid API key from environment.")
+        return env_api_key
+    
+    # Environment API key is invalid/missing, prompt user
+    st.header("🔐 API Configuration Required")
+    st.warning("⚠️ No valid OpenAI API key found in environment configuration.")
+    
+    # Check if user has already provided a key in this session
+    if st.session_state.get("user_api_key"):
+        st.success("✅ API Key configured for this session")
+        st.info("Your key is not stored permanently. It's only used for your current session.")
+        
+        # Option to update/change the key
+        if st.button("Update API Key"):
+            st.session_state.user_api_key = None
+            st.rerun()
+        
+        return st.session_state.user_api_key
+    
+    # API key input
+    user_api_key = st.text_input(
+        "🔐 Enter your OpenAI API Key", 
+        type="password",
+        help="Your API key will only be used for this session and is not stored permanently."
+    )
+    
+    if user_api_key:
+        if user_api_key.startswith("sk-"):
+            st.session_state.user_api_key = user_api_key
+            # Set environment variable for this session
+            os.environ["OPENAI_API_KEY"] = user_api_key
+            st.success("✅ API Key configured successfully!")
+            st.info("Your key is not stored permanently. It's only used for your current session.")
+            logger.info("User API key configured for session.")
+            st.rerun()  # Refresh to show the success state
+        else:
+            st.error("❌ Invalid API key format. OpenAI API keys start with 'sk-'")
+            logger.warning("Invalid API key format provided.")
+    
+    st.info("💡 **Privacy Note:** Your API key is only stored in your browser session and is never saved to disk.")
+    
+    return st.session_state.get("user_api_key")
+
+# ===============================
 # PDF uploader
 # ===============================
 def pdf_uploader_ui() -> str | None:

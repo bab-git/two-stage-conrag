@@ -27,23 +27,15 @@ load_dotenv(find_dotenv(), override=True)
 def validate_env_secrets():
     """
     Validates that all required environment variables are present and properly formatted.
-
-    This function checks for the presence and format of essential API keys and other
-    environment variables needed for the application to function properly. It raises
-    appropriate exceptions if any required variables are missing or invalid.
-
-    Raises:
-        RuntimeError: If OPENAI_API_KEY is missing or invalid
-        RuntimeError: If any other required environment variables are missing
-
-    Note:
-        This function is called during application startup to ensure all
-        necessary configuration is in place before proceeding.
+    Now works with both environment and user-provided API keys.
     """
     openai_api_key = os.getenv("OPENAI_API_KEY", "")
-    if not openai_api_key.startswith("sk-"):
-        raise RuntimeError("Invalid or missing OPENAI_API_KEY.")
+    print(f"openai_api_key: {openai_api_key}")
+    if not openai_api_key or not openai_api_key.startswith("sk-"):
+        raise RuntimeError("OpenAI API key validation failed. This should not happen if the UI logic is working correctly.")
 
+    logger.info("OpenAI API key validated successfully, ends with %s", openai_api_key[-10:])
+    
     if lang_key := os.getenv("LANGCHAIN_API_KEY"):
         logger.info(f"LangSmith key loaded (ends with {lang_key[-10:]})")
 

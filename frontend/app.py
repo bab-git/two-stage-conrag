@@ -10,7 +10,12 @@ from backend.my_lib.retrievers import Retrievers
 from backend.my_lib.qa_chains import QAchains
 from backend.settings import validate_env_secrets
 
-from helper_gui import pdf_uploader_ui, question_input_output_ui, display_results_ui
+from helper_gui import (
+    api_key_input_ui,
+    pdf_uploader_ui,
+    question_input_output_ui,
+    display_results_ui
+)
 
 # logging from backend
 import logging
@@ -26,6 +31,7 @@ def initialize_session_state() -> None:
     st.session_state.setdefault(
         "debug", os.getenv("DEBUG_MODE", "false").lower() == "true"
     )
+    st.session_state.setdefault("user_api_key", None)
     st.session_state.setdefault("pdf_manager", None)
     st.session_state.setdefault("retrievers", None)
     st.session_state.setdefault("qa_chains", None)
@@ -116,12 +122,23 @@ def main() -> None:
         st.warning("DEBUG MODE is ON")
         logger.debug("Debug mode is enabled.")
 
+    # API Key Configuration - must come before environment validation
+    api_key = api_key_input_ui()
+    
+    # Only proceed if API key is provided
+    if not api_key:
+        st.warning("⚠️ Please provide your OpenAI API key to continue.")
+        st.stop()  
+    
+    # Validate environment with the API key we now have
     if not st.session_state.get("env_validated"):
-        validate_env_secrets()
-        st.session_state.env_validated = True
-        logger.info("Environment secrets validated successfully.")
-        # st.success("Environment secrets validated successfully!")
-
+        try:
+            validate_env_secrets()
+            st.session_state.env_validated = True
+            logger.info("Environment secrets validated successfully.")
+        except RuntimeError as e:
+            st.error(f"❌ Configuration Error: {e}")
+            st.stop()
     # 1) PDF Upload and vector store creation
     pdf_path = pdf_uploader_ui()
     # Create vector store and retrievers only if the pdfs are uploaded successfully
