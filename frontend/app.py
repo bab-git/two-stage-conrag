@@ -1,3 +1,9 @@
+# fixing the sqlite3 issue on streamlit cloud
+import sys
+__import__("pysqlite3")
+# Override stdlib sqlite3 with the newer one:
+sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+
 import os
 import sys
 import streamlit as st
