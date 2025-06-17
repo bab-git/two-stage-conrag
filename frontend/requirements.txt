@@ -127,6 +127,7 @@ pypdf==5.6.0 ; python_version == "3.12"
 pypika==0.48.9 ; python_version == "3.12"
 pyproject-hooks==1.2.0 ; python_version == "3.12"
 pyreadline3==3.5.4 ; python_version == "3.12" and sys_platform == "win32"
+pysqlite3-binary>=0.5.6
 python-dateutil==2.9.0.post0 ; python_version == "3.12"
 python-dotenv==1.1.0 ; python_version == "3.12"
 pytz==2025.2 ; python_version == "3.12"
