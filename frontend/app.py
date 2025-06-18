@@ -1,8 +1,13 @@
 # fixing the sqlite3 issue on streamlit cloud
-import sys
-__import__("pysqlite3")
-# Override stdlib sqlite3 with the newer one:
-sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+try:
+    # if pysqlite3 exists (i.e. you have installed it), load and swap it in
+    __import__("pysqlite3")
+    sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+    # Optionally log so you know it happened:
+    print("🔄 Overriding stdlib sqlite3 with pysqlite3")
+except ImportError:
+    # no pysqlite3 installed → skip the swap (use system sqlite3)
+    pass
 
 import os
 import sys
@@ -137,14 +142,14 @@ def main() -> None:
         st.stop()  
     
     # Validate environment with the API key we now have
-    if not st.session_state.get("env_validated"):
-        try:
-            validate_env_secrets()
-            st.session_state.env_validated = True
-            logger.info("Environment secrets validated successfully.")
-        except RuntimeError as e:
-            st.error(f"❌ Configuration Error: {e}")
-            st.stop()
+    # if not st.session_state.get("env_validated"):
+    #     try:
+    #         validate_env_secrets()
+    #         st.session_state.env_validated = True
+    #         logger.info("Environment secrets validated successfully.")
+    #     except RuntimeError as e:
+    #         st.error(f"❌ Configuration Error: {e}")
+    #         st.stop()
     # 1) PDF Upload and vector store creation
     pdf_path = pdf_uploader_ui()
     # Create vector store and retrievers only if the pdfs are uploaded successfully
@@ -163,7 +168,7 @@ def main() -> None:
         st.session_state.retrievers = retrievers
 
         # Create QA chains
-        st.session_state.qa_chains = QAchains(retrievers, config)
+        st.session_state.qa_chains = QAchains(retrievers, config, api_key)
         st.success("PDFs and vector store processed successfully!")
 
     # 2) Question Section (only if retriever is successfully created)

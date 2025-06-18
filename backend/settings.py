@@ -24,20 +24,23 @@ logger = logging.getLogger(__name__)
 load_dotenv(find_dotenv(), override=True)
 
 
-def validate_env_secrets():
+def validate_env_secrets(openai_api_key: str) -> bool:
     """
     Validates that all required environment variables are present and properly formatted.
     Now works with both environment and user-provided API keys.
     """
-    openai_api_key = os.getenv("OPENAI_API_KEY", "")
-    print(f"openai_api_key: {openai_api_key}")
+    # openai_api_key = os.getenv("OPENAI_API_KEY", "")    
     if not openai_api_key or not openai_api_key.startswith("sk-"):
-        raise RuntimeError("OpenAI API key validation failed. This should not happen if the UI logic is working correctly.")
-
+        # raise RuntimeError("OpenAI API key validation failed. This should not happen if the UI logic is working correctly.")
+        logger.error("OpenAI API key validation failed. This should not happen if the UI logic is working correctly.")
+        return False
+    
     logger.info("OpenAI API key validated successfully, ends with %s", openai_api_key[-10:])
     
     if lang_key := os.getenv("LANGCHAIN_API_KEY"):
         logger.info(f"LangSmith key loaded (ends with {lang_key[-10:]})")
+    
+    return True
 
 
 # Find if streamlit is running

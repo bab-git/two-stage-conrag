@@ -61,7 +61,7 @@ def api_key_input_ui() -> str | None:
         if user_api_key.startswith("sk-"):
             st.session_state.user_api_key = user_api_key
             # Set environment variable for this session
-            os.environ["OPENAI_API_KEY"] = user_api_key
+            # os.environ["OPENAI_API_KEY"] = user_api_key
             st.success("✅ API Key configured successfully!")
             st.info("Your key is not stored permanently. It's only used for your current session.")
             logger.info("User API key configured for session.")
