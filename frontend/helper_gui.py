@@ -74,6 +74,7 @@ def question_input_output_ui(qa_chains: QAchains) -> tuple[str, str | None]:
         - Shows processing spinners during question processing
         - Displays error messages for empty questions or processing failures
     """
+    st.header("2. Ask a question")
     question = st.text_input(
         "Enter your question related to the uploaded documents:",
         value="""What are the expectations for the Federal Reserve's interest rate cuts 

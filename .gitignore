@@ -13,7 +13,7 @@ dist/
 outputs/
 
 # Environment
-.*env
+.*env/
 *.env
 
 # Data and Storage
