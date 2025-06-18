@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 import streamlit as st
 from omegaconf import OmegaConf
 
@@ -10,7 +11,11 @@ from backend.my_lib.retrievers import Retrievers
 from backend.my_lib.qa_chains import QAchains
 from backend.settings import validate_env_secrets
 
-from helper_gui import pdf_uploader_ui, question_input_output_ui, display_results_ui
+from helper_gui import (
+    question_input_output_ui, 
+    display_results_ui,
+    pdf_uploader_ui, 
+    save_uploaded_pdfs)
 
 # logging from backend
 import logging
@@ -36,7 +41,8 @@ def initialize_session_state() -> None:
 
 @st.cache_resource
 def vector_store_builder(
-    pdf_path: str, _config: OmegaConf
+    pdf_path: str, _config: OmegaConf,
+    uploaded: list | None
 ) -> tuple[PDFManager, Retrievers]:
     """
     Process the uploaded PDF documents: load, chunk, and create a vector store.
@@ -92,6 +98,7 @@ def main() -> None:
     Returns:
         None
     """
+
     logger.info("Starting Streamlit app")
 
     # Display the image at the top of the app
@@ -112,6 +119,12 @@ def main() -> None:
     initialize_session_state()
     logger.info("Session state initialized successfully.")
 
+    # clear the vector store
+    if not st.session_state.get("vector_store_cleared", False):
+        shutil.rmtree(config.Vectorstore.persist_directory, ignore_errors=True)
+        # rebuild the vector store
+        st.session_state.vector_store_cleared = True
+
     if st.session_state.debug:
         st.warning("DEBUG MODE is ON")
         logger.debug("Debug mode is enabled.")
@@ -122,20 +135,25 @@ def main() -> None:
         logger.info("Environment secrets validated successfully.")
         # st.success("Environment secrets validated successfully!")
 
-    # 1) PDF Upload and vector store creation
-    pdf_path = pdf_uploader_ui()
+    # PDF Upload and vector store creation
+    # pdf_path = pdf_uploader_ui()
+    uploaded = pdf_uploader_ui()
+    if uploaded is not None:
+        pdf_path = save_uploaded_pdfs(uploaded, "data/uploads")    
+    # else:
+        # pdf_path = None
+
     # Create vector store and retrievers only if the pdfs are uploaded successfully
-    if pdf_path is not None:
+    # if pdf_path is not None:
         logger.info("PDF path provided: %s", pdf_path)
         if st.session_state.debug:
-            st.write("pdfs path:", pdf_path)
-
-        if st.session_state.get("retrievers") is not None:
-            st.info(
-                "Vector store is already built - you can proceed to ask your question"
-            )
-            logger.info("Vector store already built, skipping creation.")
-        pdf_manager, retrievers = vector_store_builder(pdf_path, config)
+            st.write("pdfs path:", pdf_path)        
+        # if st.session_state.get("retrievers") is not None:
+        #     st.info(
+        #         "Vector store is already built - you can proceed to ask your question"
+        #     )
+        #     logger.info("Vector store already built, skipping creation.")
+        pdf_manager, retrievers = vector_store_builder(pdf_path, config, uploaded)
         st.session_state.pdf_manager = pdf_manager
         st.session_state.retrievers = retrievers
 
