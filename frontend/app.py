@@ -1,4 +1,5 @@
 # fixing the sqlite3 issue on streamlit cloud
+import sys
 try:
     # if pysqlite3 exists (i.e. you have installed it), load and swap it in
     __import__("pysqlite3")
@@ -10,7 +11,6 @@ except ImportError:
     pass
 
 import os
-import sys
 import streamlit as st
 from omegaconf import OmegaConf
 
