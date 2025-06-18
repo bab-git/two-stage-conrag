@@ -21,7 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Load secrets from .env
-load_dotenv(find_dotenv(), override=True)
+# load_dotenv(find_dotenv(), override=True)
 
 
 def validate_env_secrets(openai_api_key: str) -> bool:

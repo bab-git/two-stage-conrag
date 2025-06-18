@@ -31,6 +31,7 @@ def api_key_input_ui() -> str | None:
     if env_api_key and env_api_key.startswith("sk-"):
         # Environment API key is valid, no need for user input
         st.success("✅ Using API Key from environment configuration")
+        print(f"🔄 Environment API key: {env_api_key[:20]}")
         logger.info("Using valid API key from environment.")
         return env_api_key
     
@@ -62,6 +63,7 @@ def api_key_input_ui() -> str | None:
             st.session_state.user_api_key = user_api_key
             # Set environment variable for this session
             # os.environ["OPENAI_API_KEY"] = user_api_key
+            print(f"🔄 User API key: {user_api_key[:20]}")
             st.success("✅ API Key configured successfully!")
             st.info("Your key is not stored permanently. It's only used for your current session.")
             logger.info("User API key configured for session.")

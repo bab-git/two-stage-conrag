@@ -50,22 +50,21 @@ def initialize_session_state() -> None:
     st.session_state.setdefault("qa_history", [])
     logger.debug("Session state initialized.")
 
-
 # test ollama with @st.cache_resource
-@st.cache_resource
-def test_ollama():
-    # import a llama model and make a simple prompt
-    from ollama import chat, pull
-    print("🔄 Testing ollama")
-    pull("llama3.2:1b")
-    print("🔄 Testing ollama")
-    messages = [
-        {"role": "system", "content": "You are a snarky assistant"},
-        {"role": "user", "content": "What is 2 + 2?"}
-    ]
-    response = chat(model="llama3.2:1b", messages=messages)
-    # response = chat.generate("Hello, how are you?")
-    return response['message']['content']
+# @st.cache_resource
+# def test_ollama():
+#     # import a llama model and make a simple prompt
+#     from ollama import chat, pull
+#     print("🔄 Testing ollama")
+#     pull("llama3.2:1b")
+#     print("🔄 Testing ollama")
+#     messages = [
+#         {"role": "system", "content": "You are a snarky assistant"},
+#         {"role": "user", "content": "What is 2 + 2?"}
+#     ]
+#     response = chat(model="llama3.2:1b", messages=messages)
+#     # response = chat.generate("Hello, how are you?")
+#     return response['message']['content']
 
 @st.cache_resource
 def vector_store_builder(
@@ -128,7 +127,7 @@ def main() -> None:
     logger.info("Starting Streamlit app")
 
     # test ollama
-    st.write(test_ollama())
+    # st.write(test_ollama())
 
     # Display the image at the top of the app
     st.image("frontend/static/image.jpeg", use_container_width=True)
