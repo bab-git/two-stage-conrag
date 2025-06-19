@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # ===============================
 # PDF uploader
 # ===============================
-def pdf_uploader_ui() -> list[UploadedFile] | None:
+def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
     """
     Display the PDF uploader UI block and return a list of UploadedFile objects
     when the user clicks “Submit PDFs”. Returns None otherwise.
@@ -25,15 +25,61 @@ def pdf_uploader_ui() -> list[UploadedFile] | None:
         type="pdf",
         accept_multiple_files=True
     )
-    if st.button("Submit PDFs"):
+    # Create two columns for the buttons
+    col1, col2, col3 = st.columns([1, .31, 1])  # Adjust ratios for spacing
+
+    with col1:
+        submit_uploaded = st.button(
+            "📁 Use Uploaded PDFs",
+            help="Use the PDF files you've uploaded above to build the demo.",
+            type="primary"
+        )
+
+    with col2:
+        st.markdown("#### or")
+
+    with col3:
+        use_samples = st.button(
+            "📚 Try Sample PDFs",
+            help="Load a set of built-in sample PDFs for quick demo testing.",
+            type="secondary"
+        )
+
+    # Handle uploaded PDFs
+    if submit_uploaded:
         if uploaded:
             logger.info("User uploaded %d PDF(s)", len(uploaded))
-            return uploaded
+            pdf_path = save_uploaded_pdfs(uploaded, "data/uploads")
+            return uploaded, pdf_path
         else:
             st.error("Please upload at least one PDF.")
             logger.warning("Submit clicked with no PDFs uploaded")
-    return None
+            # return None, None
 
+    # Handle sample PDFs
+    if use_samples:
+        sample_path = "data/sample_pdfs"
+        if os.path.exists(sample_path) and os.path.isdir(sample_path):
+            # Check if there are PDF files in the sample directory
+            pdf_files = [f for f in os.listdir(sample_path) if f.lower().endswith('.pdf')]
+            if pdf_files:
+                logger.info("Using sample PDFs from: %s", sample_path)
+                st.success(f"✅ Using {len(pdf_files)} sample PDF files from {sample_path}")
+                
+                # Show which files will be used
+                with st.expander("📋 Sample PDFs to be processed:", expanded=False):
+                    for i, pdf_file in enumerate(pdf_files, 1):
+                        st.write(f"{i}. {pdf_file}")
+                
+                return pdf_files, sample_path
+            else:
+                st.error(f"No PDF files found in {sample_path}")
+                logger.warning("No PDF files in sample directory: %s", sample_path)
+        else:
+            st.error(f"Sample PDF directory not found: {sample_path}")
+            logger.warning("Sample PDF directory does not exist: %s", sample_path)
+    
+    return None, None
 # ===============================
 # Save uploaded PDFs
 # ===============================

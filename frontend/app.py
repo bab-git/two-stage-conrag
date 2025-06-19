@@ -138,10 +138,10 @@ def main() -> None:
 
     # PDF Upload and vector store creation
     # pdf_path = pdf_uploader_ui()
-    uploaded = pdf_uploader_ui()
+    uploaded, pdf_path = pdf_uploader_ui()
     if uploaded is not None:
-        print(uploaded)
-        pdf_path = save_uploaded_pdfs(uploaded, "data/uploads")    
+        # print(uploaded)
+        # pdf_path = save_uploaded_pdfs(uploaded, "data/uploads")    
     # else:
         # pdf_path = None
 
