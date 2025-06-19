@@ -17,6 +17,9 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
+      - name: Copy example env
+        run: cp .env_example .env
+        
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
