@@ -15,6 +15,7 @@ llm:
 Vectorstore:  
   collection_name: large_chunks
   persist_directory : 'vector_store'
+  clear_existing: False # Feature flag: to clear the vector store before rebuilding it at each run
 
 Retrieval:
   semantic_CE_model : cross-encoder/stsb-TinyBERT-L-4 # cross encoder for similarity scoring of semantic search retults. The models are optimized for semantic similarity

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] UX Enhancements and Upload Features
+
+### Added
+- Upload support in Streamlit app for user-provided PDFs (`pdf_uploader_ui`)
+- Submit buttons for both "Upload PDFs" and sample file trigger
+- PDF upload processing integrated into app initialization
+- Vector store cleanup with feature flag support
+
+### Changed
+- Streamlit header layout and spacing for better UX
+
 ## [0.2.0] Refactored backend with Docker support
 
 ### Added

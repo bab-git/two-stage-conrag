@@ -3,6 +3,7 @@
 import streamlit as st
 import os
 from backend.my_lib.qa_chains import QAchains
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 # logging configured in backend/settings.py
 import logging
@@ -13,38 +14,136 @@ logger = logging.getLogger(__name__)
 # ===============================
 # PDF uploader
 # ===============================
-def pdf_uploader_ui() -> str | None:
+def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
     """
-    Display the PDF uploader UI block with input field and submit button.
-
-    This function renders a text input for users to enter a directory path containing
-    PDF files and a submit button to validate the path. It checks if the provided
-    path is a valid directory and displays appropriate error messages if not.
-
-    Returns:
-        str or None: The valid directory path if the submit button is clicked and
-                    the path is valid, otherwise None.
-
-    Side Effects:
-        - Displays Streamlit UI components (header, text_input, button)
-        - Shows error messages via st.error() for invalid paths
+    Display the PDF uploader UI block and return a list of UploadedFile objects
+    when the user clicks “Submit PDFs”. Returns None otherwise.
     """
     st.header("1. Upload PDF Documents")
-    pdf_path = st.text_input(
-        "Enter the path to the folder containing your PDF files:",
-        value="data/sample_pdfs/",
+    uploaded = st.file_uploader(
+        "Upload PDFs files or the folder containing PDFs",
+        type="pdf",
+        accept_multiple_files=True,
     )
+    # Create two columns for the buttons
+    col1, col2, col3 = st.columns([1, 0.31, 1])  # Adjust ratios for spacing
 
-    if st.button("Submit PDFs"):
-        if pdf_path and os.path.isdir(pdf_path):
-            logger.info("PDF path submitted: %s", pdf_path)
-            return pdf_path
+    with col1:
+        submit_uploaded = st.button(
+            "📁 Use Uploaded PDFs",
+            help="Use the PDF files you've uploaded above to build the demo.",
+            type="primary",
+        )
+
+    with col2:
+        st.markdown("#### or")
+
+    with col3:
+        use_samples = st.button(
+            "📚 Try Sample PDFs",
+            help="Load a set of built-in sample PDFs for quick demo testing.",
+            type="secondary",
+        )
+
+    # Handle uploaded PDFs
+    if submit_uploaded:
+        if uploaded:
+            logger.info("User uploaded %d PDF(s)", len(uploaded))
+            pdf_path = save_uploaded_pdfs(uploaded, "data/uploads")
+            return uploaded, pdf_path
         else:
-            st.error(
-                "Cannot find PDF files in the directory. Please select a directory with PDF files."
-            )
-            logger.warning("Invalid PDF path submitted: %s", pdf_path)
-    return None
+            st.error("Please upload at least one PDF.")
+            logger.warning("Submit clicked with no PDFs uploaded")
+            # return None, None
+
+    # Handle sample PDFs
+    if use_samples:
+        sample_path = "data/sample_pdfs"
+        if os.path.exists(sample_path) and os.path.isdir(sample_path):
+            # Check if there are PDF files in the sample directory
+            pdf_files = [
+                f for f in os.listdir(sample_path) if f.lower().endswith(".pdf")
+            ]
+            if pdf_files:
+                logger.info("Using sample PDFs from: %s", sample_path)
+                st.success(
+                    f"✅ Using {len(pdf_files)} sample PDF files from {sample_path}"
+                )
+
+                # Show which files will be used
+                with st.expander("📋 Sample PDFs to be processed:", expanded=False):
+                    for i, pdf_file in enumerate(pdf_files, 1):
+                        st.write(f"{i}. {pdf_file}")
+
+                return pdf_files, sample_path
+            else:
+                st.error(f"No PDF files found in {sample_path}")
+                logger.warning("No PDF files in sample directory: %s", sample_path)
+        else:
+            st.error(f"Sample PDF directory not found: {sample_path}")
+            logger.warning("Sample PDF directory does not exist: %s", sample_path)
+
+    return None, None
+
+
+# ===============================
+# Save uploaded PDFs
+# ===============================
+def save_uploaded_pdfs(
+    uploaded_files: list[UploadedFile], dest_folder: str, clear_existing: bool = True
+) -> str:
+    import shutil
+
+    """
+    Write the given UploadedFile objects to disk under dest_folder.
+    If clear_existing is True, wipes the folder first.
+    Returns the path to dest_folder once files are saved.
+    """
+    if clear_existing:
+        shutil.rmtree(dest_folder, ignore_errors=True)
+    os.makedirs(dest_folder, exist_ok=True)
+
+    for f in uploaded_files:
+        out_path = os.path.join(dest_folder, f.name)
+        with open(out_path, "wb") as out:
+            out.write(f.getbuffer())
+    logger.info("Saved %d PDFs to %s", len(uploaded_files), dest_folder)
+    return dest_folder
+
+
+# def pdf_uploader_ui() -> str | None:
+#     """
+#     Display the PDF uploader UI block with input field and submit button.
+
+#     This function renders a text input for users to enter a directory path containing
+#     PDF files and a submit button to validate the path. It checks if the provided
+#     path is a valid directory and displays appropriate error messages if not.
+
+#     Returns:
+#         str or None: The valid directory path if the submit button is clicked and
+#                     the path is valid, otherwise None.
+
+#     Side Effects:
+#         - Displays Streamlit UI components (header, text_input, button)
+#         - Shows error messages via st.error() for invalid paths
+#     """
+#     st.header("1. Upload PDF Documents")
+#     pdf_path = st.text_input(
+#         "Enter the path to the folder containing your PDF files:",
+#         value="data/sample_pdfs/",
+#     )
+
+#     # Read from a local folder
+#     if st.button("Submit PDFs"):
+#         if pdf_path and os.path.isdir(pdf_path):
+#             logger.info("PDF path submitted: %s", pdf_path)
+#             return pdf_path
+#         else:
+#             st.error(
+#                 "Cannot find PDF files in the directory. Please select a directory with PDF files."
+#             )
+#             logger.warning("Invalid PDF path submitted: %s", pdf_path)
+#     return None
 
 
 # ===============================
@@ -74,6 +173,7 @@ def question_input_output_ui(qa_chains: QAchains) -> tuple[str, str | None]:
         - Shows processing spinners during question processing
         - Displays error messages for empty questions or processing failures
     """
+    st.header("2. Ask a question")
     question = st.text_input(
         "Enter your question related to the uploaded documents:",
         value="""What are the expectations for the Federal Reserve's interest rate cuts 
