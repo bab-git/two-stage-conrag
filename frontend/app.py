@@ -3,6 +3,7 @@ import sys
 import shutil
 import streamlit as st
 from omegaconf import OmegaConf
+from llama_cpp import Llama
 
 # Ensure the root directory is on the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -11,7 +12,7 @@ from backend.my_lib.retrievers import Retrievers
 from backend.my_lib.qa_chains import QAchains
 from backend.settings import validate_env_secrets
 
-from helper_gui import question_input_output_ui, display_results_ui, pdf_uploader_ui
+from helper_gui import question_input_output_ui, display_results_ui, pdf_uploader_ui, select_model_ui, get_openai_key
 
 # logging from backend
 import logging
@@ -34,6 +35,15 @@ def initialize_session_state() -> None:
     st.session_state.setdefault("qa_history", [])
     logger.debug("Session state initialized.")
 
+
+# Cache this resource so it's only loaded once per session
+@st.cache_resource
+def load_local_llama(repo_id: str, filename: str) -> Llama:
+    return Llama.from_pretrained(
+        repo_id=repo_id,
+        filename=filename,
+        verbose=False
+    )
 
 @st.cache_resource
 def vector_store_builder(
@@ -104,10 +114,22 @@ def main() -> None:
     logger.info("Configuration loaded successfully.")
     # print(config)
 
+
+    # ==============================
+    # Constructing the Layout
+    # ==============================
     st.title("Two-Stage RAG System for PDF Question Answering")
-    st.subheader("Fast yet Precise Document Retrieval and Question Answering")
+    # st.subheader("Fast yet Precise Document Retrieval and Question Answering")
     st.write(
-        "Upload a folder of PDF documents and ask questions to extract relevant information using the two-stage pipeline."
+        "Start by **selecting a model** (OpenAI or local LLaMA), then **upload your PDF files**, and finally **ask questions** to extract insights using the two-stage retrieval system."
+    ) 
+   
+    # sidebar    
+    st.sidebar.header("App Description")
+    st.sidebar.write(
+        "This application leverages a two-stage retrieval-augmented generation (RAG) pipeline to efficiently process and extract information from PDF documents. "
+        "Users can upload a collection of PDFs and interactively ask questions to receive precise answers based on the document content. "
+        "The system supports both OpenAI and local LLaMA models, providing flexibility in model selection and deployment."
     )
 
     # Initialize session state variables
@@ -124,17 +146,50 @@ def main() -> None:
         # rebuild the vector store
         st.session_state.vector_store_cleared = True
 
+    # Check debug mode
     if st.session_state.debug:
         st.warning("DEBUG MODE is ON")
         logger.debug("Debug mode is enabled.")
 
+    # Validate environment secrets
     if not st.session_state.get("env_validated"):
         validate_env_secrets()
         st.session_state.env_validated = True
         logger.info("Environment secrets validated successfully.")
         # st.success("Environment secrets validated successfully!")
 
+    # ==============================
+    # Model Selection
+    # ==============================
+    model_choice = select_model_ui()
+    # from helper_gui import get_openai_key
+    # Instantiate the chosen LLM
+    if model_choice == "OpenAI":
+        openai_key = get_openai_key()
+        if not openai_key:
+            st.warning("Please enter a valid OpenAI API key before proceeding. Key will be stored in your environment—just for this session.")
+            st.stop()
+        from langchain_openai import ChatOpenAI        
+        llm = ChatOpenAI(
+            api_key=openai_key,
+            model=config.llm.openai_modelID,
+            temperature=0.0
+        )
+
+        st.session_state['api_key'] = openai_key
+        st.info("OpenAI API key loaded successfully end with " + openai_key[-5:])        
+    else:  # Local LLaMA
+        # display_loading_local_model()
+        # adjust these paths or load from config.yaml if you like
+        repo_model = config.llm.local_llama_model
+        filename   = config.llm.local_llama_filename
+        llm = load_local_llama(repo_model, filename)
+        st.info("Local LLaMA model loaded successfully.")
+    
+
+    # ==============================
     # PDF Upload and vector store creation
+    # ==============================
     # pdf_path = pdf_uploader_ui()
     uploaded, pdf_path = pdf_uploader_ui()
     if uploaded is not None:
@@ -158,10 +213,12 @@ def main() -> None:
         st.session_state.retrievers = retrievers
 
         # Create QA chains
-        st.session_state.qa_chains = QAchains(retrievers, config)
+        st.session_state.qa_chains = QAchains(retrievers, config, llm)
         st.success("PDFs and vector store processed successfully!")
 
-    # 2) Question Section (only if retriever is successfully created)
+    # ==============================
+    # Question Section (only if retriever is successfully created)
+    # ==============================
     if st.session_state.get("retrievers") is not None:
         question, answer = question_input_output_ui(st.session_state.qa_chains)
 
@@ -170,7 +227,9 @@ def main() -> None:
             st.session_state.qa_history.append((question, answer))
             logger.info("Question answered: %s, answer: %s", question, answer)
 
-    # 3) Display answer & history
+    # ==============================
+    # Display answer & history
+    # ==============================
     display_results_ui(
         answer=st.session_state.answer,
         qa_history=st.session_state.qa_history,

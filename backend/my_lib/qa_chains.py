@@ -32,7 +32,7 @@ class QAchains:
     through question shortening and document ranking.
     """
 
-    def __init__(self, retrievers: Retrievers, config: OmegaConf):
+    def __init__(self, retrievers: Retrievers, config: OmegaConf, llm = None):
         """
         Initializes the QAchain object.
 
@@ -44,8 +44,10 @@ class QAchains:
         self.top_k_final = config.Retrieval.top_k_final
         self.verbose = config.settings.verbose
         self.retrievers = retrievers
-        modelID = config.llm.openai_modelID
-        self.llm = ChatOpenAI(temperature=0.0, model=modelID)
+        if llm is None:            
+            self.llm = ChatOpenAI(temperature=0.0, model=config.llm.openai_modelID)
+        else:
+            self.llm = llm
         self.question = None
         self.shortened_question = None
         self.retrieved_docs = None

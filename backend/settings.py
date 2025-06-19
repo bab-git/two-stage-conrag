@@ -41,8 +41,8 @@ def validate_env_secrets():
         necessary configuration is in place before proceeding.
     """
     openai_api_key = os.getenv("OPENAI_API_KEY", "")
-    if not openai_api_key.startswith("sk-"):
-        raise RuntimeError("Invalid or missing OPENAI_API_KEY.")
+    if not openai_api_key or not openai_api_key.startswith("sk-"):
+        logger.error("Invalid or missing OPENAI_API_KEY.")
 
     if lang_key := os.getenv("LANGCHAIN_API_KEY"):
         logger.info(f"LangSmith key loaded (ends with {lang_key[-10:]})")

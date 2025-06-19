@@ -4,12 +4,15 @@ import streamlit as st
 import os
 from backend.my_lib.qa_chains import QAchains
 from streamlit.runtime.uploaded_file_manager import UploadedFile
+from dotenv import load_dotenv, find_dotenv
+
+# Load secrets from .env
+load_dotenv(find_dotenv(), override=True)
 
 # logging configured in backend/settings.py
 import logging
 
 logger = logging.getLogger(__name__)
-
 
 # ===============================
 # PDF uploader
@@ -19,7 +22,7 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
     Display the PDF uploader UI block and return a list of UploadedFile objects
     when the user clicks “Submit PDFs”. Returns None otherwise.
     """
-    st.header("1. Upload PDF Documents")
+    st.header("2. Upload PDF Documents")
     uploaded = st.file_uploader(
         "Upload PDFs files or the folder containing PDFs",
         type="pdf",
@@ -173,7 +176,7 @@ def question_input_output_ui(qa_chains: QAchains) -> tuple[str, str | None]:
         - Shows processing spinners during question processing
         - Displays error messages for empty questions or processing failures
     """
-    st.header("2. Ask a question")
+    st.header("3. Ask a question")
     question = st.text_input(
         "Enter your question related to the uploaded documents:",
         value="""What are the expectations for the Federal Reserve's interest rate cuts 
@@ -298,3 +301,36 @@ def display_results_ui(
                     # st.markdown(f"**A{idx}:** {a[:100]}{'...' if len(a) > 100 else ''}")  # Truncate long answers
                     st.markdown("---")
             logger.info("Displayed Q&A history.")
+
+
+
+# ===============================
+# Model Selection
+# ===============================
+def get_openai_key():
+    """
+    1. Reads OPENAI_API_KEY from .env in the repo root (without setting os.environ).
+    2. If missing or equal to "dummy", prompts the user via a Streamlit text_input.
+    3. Returns the key (may be empty if the user hasn’t typed it yet).
+    """    
+
+    api_key = os.getenv("OPENAI_API_KEY", "dummy").strip()
+
+    # if it’s not set or is literally "dummy", ask the user
+    if not api_key or api_key.lower() == "dummy":
+        st.sidebar.header("OpenAI API Key") 
+        api_key = st.sidebar.text_input(
+            "Enter your OpenAI API Key.",
+            type="password",
+            help="This key will be stored in your environment—just for this session.",
+        ).strip()
+
+    return api_key
+
+def select_model_ui():
+    st.header("1. Select LLM Model")
+    model_choice = st.selectbox("Select LLM Backend", ["Local LLaMA", "OpenAI (GPT-4o-mini)"])
+    return model_choice
+
+# def display_loading_local_model():
+#     st.sidebar.info("Loading local LLaMA model… this may take a moment.")
