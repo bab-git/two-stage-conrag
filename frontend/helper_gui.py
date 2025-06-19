@@ -23,16 +23,16 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
     uploaded = st.file_uploader(
         "Upload PDFs files or the folder containing PDFs",
         type="pdf",
-        accept_multiple_files=True
+        accept_multiple_files=True,
     )
     # Create two columns for the buttons
-    col1, col2, col3 = st.columns([1, .31, 1])  # Adjust ratios for spacing
+    col1, col2, col3 = st.columns([1, 0.31, 1])  # Adjust ratios for spacing
 
     with col1:
         submit_uploaded = st.button(
             "📁 Use Uploaded PDFs",
             help="Use the PDF files you've uploaded above to build the demo.",
-            type="primary"
+            type="primary",
         )
 
     with col2:
@@ -42,7 +42,7 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
         use_samples = st.button(
             "📚 Try Sample PDFs",
             help="Load a set of built-in sample PDFs for quick demo testing.",
-            type="secondary"
+            type="secondary",
         )
 
     # Handle uploaded PDFs
@@ -61,16 +61,20 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
         sample_path = "data/sample_pdfs"
         if os.path.exists(sample_path) and os.path.isdir(sample_path):
             # Check if there are PDF files in the sample directory
-            pdf_files = [f for f in os.listdir(sample_path) if f.lower().endswith('.pdf')]
+            pdf_files = [
+                f for f in os.listdir(sample_path) if f.lower().endswith(".pdf")
+            ]
             if pdf_files:
                 logger.info("Using sample PDFs from: %s", sample_path)
-                st.success(f"✅ Using {len(pdf_files)} sample PDF files from {sample_path}")
-                
+                st.success(
+                    f"✅ Using {len(pdf_files)} sample PDF files from {sample_path}"
+                )
+
                 # Show which files will be used
                 with st.expander("📋 Sample PDFs to be processed:", expanded=False):
                     for i, pdf_file in enumerate(pdf_files, 1):
                         st.write(f"{i}. {pdf_file}")
-                
+
                 return pdf_files, sample_path
             else:
                 st.error(f"No PDF files found in {sample_path}")
@@ -78,17 +82,18 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
         else:
             st.error(f"Sample PDF directory not found: {sample_path}")
             logger.warning("Sample PDF directory does not exist: %s", sample_path)
-    
+
     return None, None
+
+
 # ===============================
 # Save uploaded PDFs
 # ===============================
 def save_uploaded_pdfs(
-    uploaded_files: list[UploadedFile],
-    dest_folder: str,
-    clear_existing: bool = True
+    uploaded_files: list[UploadedFile], dest_folder: str, clear_existing: bool = True
 ) -> str:
     import shutil
+
     """
     Write the given UploadedFile objects to disk under dest_folder.
     If clear_existing is True, wipes the folder first.
