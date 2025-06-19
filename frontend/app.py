@@ -120,7 +120,8 @@ def main() -> None:
     logger.info("Session state initialized successfully.")
 
     # clear the vector store
-    if not st.session_state.get("vector_store_cleared", False):
+    print('vector_store_cleared:', st.session_state.get("vector_store_cleared", False))
+    if not st.session_state.get("vector_store_cleared", False) and config.Vectorstore.clear_existing:
         shutil.rmtree(config.Vectorstore.persist_directory, ignore_errors=True)
         # rebuild the vector store
         st.session_state.vector_store_cleared = True
@@ -139,6 +140,7 @@ def main() -> None:
     # pdf_path = pdf_uploader_ui()
     uploaded = pdf_uploader_ui()
     if uploaded is not None:
+        print(uploaded)
         pdf_path = save_uploaded_pdfs(uploaded, "data/uploads")    
     # else:
         # pdf_path = None

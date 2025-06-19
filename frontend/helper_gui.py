@@ -21,7 +21,7 @@ def pdf_uploader_ui() -> list[UploadedFile] | None:
     """
     st.header("1. Upload PDF Documents")
     uploaded = st.file_uploader(
-        "Upload one or more PDFs",
+        "Upload PDFs files or the folder containing PDFs",
         type="pdf",
         accept_multiple_files=True
     )
