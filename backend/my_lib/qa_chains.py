@@ -6,6 +6,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from backend.settings import is_streamlit_running
 from omegaconf import OmegaConf
+from backend.my_lib.LLMManager import LLMManager
 
 import logging
 
@@ -32,7 +33,7 @@ class QAchains:
     through question shortening and document ranking.
     """
 
-    def __init__(self, retrievers: Retrievers, config: OmegaConf, llm = None):
+    def __init__(self, retrievers: Retrievers, config: OmegaConf, llm_manager: LLMManager = None):
         """
         Initializes the QAchain object.
 
@@ -44,10 +45,10 @@ class QAchains:
         self.top_k_final = config.Retrieval.top_k_final
         self.verbose = config.settings.verbose
         self.retrievers = retrievers
-        if llm is None:            
-            self.llm = ChatOpenAI(temperature=0.0, model=config.llm.openai_modelID)
+        if llm_manager is None:            
+            self.llm_manager = LLMManager(llm_instance = None)
         else:
-            self.llm = llm
+            self.llm_manager = llm_manager
         self.question = None
         self.shortened_question = None
         self.retrieved_docs = None
@@ -78,19 +79,24 @@ class QAchains:
 
         Original Question: "{original_question}"
 
-        Reformulated phrases: """
+        Reformulated phrases: 
+        """
 
         try:
-            custom_short_prompt = PromptTemplate.from_template(shortening_prompt)
+            # custom_short_prompt = PromptTemplate.from_template(shortening_prompt)
 
-            shortening_chain = (
-                {"original_question": RunnablePassthrough()}
-                | custom_short_prompt
-                | self.llm
-                | StrOutputParser()
-            )
+            # shortening_chain = (
+            #     {"original_question": RunnablePassthrough()}
+            #     | custom_short_prompt
+            #     | self.llm
+            #     | StrOutputParser()
+            # )
+            # chain = custom_short_prompt | self.llm | StrOutputParser()
 
-            shortened_question = shortening_chain.invoke(question)
+            # shortened_question = shortening_chain.invoke(question)
+            invoke_kwargs = {"original_question": question}
+            shortened_question = self.llm_manager.invoke(shortening_prompt, invoke_kwargs)
+            # shortened_question = chain.invoke({"original_question": question})
             # print(shortened_question)
             if is_streamlit_running():
                 st.success(f"The shortened question:\n {shortened_question}")
@@ -252,14 +258,16 @@ class QAchains:
         """
 
         try:
-            custom_rag_prompt = PromptTemplate.from_template(system_prompt)
-            chain = custom_rag_prompt | self.llm | StrOutputParser()
+            # custom_rag_prompt = PromptTemplate.from_template(system_prompt)
+            # chain = custom_rag_prompt | self.llm | StrOutputParser()
 
             context = "\ndocument_separator: <<<<>>>>>\n".join(
                 doc.page_content for doc in self.top_score_docs
             )
-            response = chain.invoke({"context": context, "question": self.question})
-            self.response = response.strip()
+            # response = chain.invoke({"context": context, "question": self.question})
+            invoke_kwargs = {"context": context, "question": self.question}
+            response = self.llm_manager.invoke(system_prompt, invoke_kwargs)
+            self.response = response
             return self.response
         except Exception as e:
             if is_streamlit_running():
