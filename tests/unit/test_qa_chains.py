@@ -30,25 +30,23 @@ def test_shorten_question_unit(config, monkeypatch):
 
 def test_generate_answer_unit(config, monkeypatch):
     from backend.my_lib.qa_chains import QAchains
+    from backend.my_lib.LLMManager import LLMManager
     from langchain_core.documents import Document
     
     # Mock the Retrievers dependency
     mock_retrievers = type("MockRetrievers", (), {})()
     
-    # Mock ChatOpenAI to avoid API calls
-    class MockLLM:
-        def __init__(self, **kwargs):
-            pass
-        def invoke(self, input_data):
+    # Mock LLMManager
+    class MockLLMManager:
+        def invoke(self, prompt, invoke_kwargs, **kwargs):
             # Return a mock response that includes context info
-            context = input_data.get("context", "")
-            question = input_data.get("question", "")
+            context = invoke_kwargs.get("context", "")
+            question = invoke_kwargs.get("question", "")
             return f"Mock answer for '{question}' based on context length: {len(context)}"
     
-    # Create QAchains instance with mocked LLM
-    qach = QAchains.__new__(QAchains)  # Create without calling __init__ to avoid LLM creation
-    qach.retrievers = mock_retrievers
-    qach.llm = MockLLM()
+    # Create QAchains instance with mocked LLMManager
+    mock_llm_manager = MockLLMManager()
+    qach = QAchains(mock_retrievers, config, mock_llm_manager)
     qach.question = "What is the company revenue?"
     qach.shortened_question = "company revenue"
     
@@ -64,19 +62,6 @@ def test_generate_answer_unit(config, monkeypatch):
         )
     ]
     qach.top_score_docs = mock_docs
-    
-    # Mock the PromptTemplate and chain creation
-    def mock_prompt_from_template(template):
-        return type("MockPrompt", (), {
-            "__or__": lambda self, other: type("MockChain", (), {
-                "invoke": lambda chain_self, input_data: MockLLM().invoke(input_data)
-            })()
-        })()
-    
-    monkeypatch.setattr("backend.my_lib.qa_chains.PromptTemplate.from_template", mock_prompt_from_template)
-    monkeypatch.setattr("backend.my_lib.qa_chains.StrOutputParser", lambda: type("MockParser", (), {
-        "__ror__": lambda self, other: other
-    })())
     
     # Test generate_answer
     result = qach.generate_answer()

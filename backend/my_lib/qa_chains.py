@@ -1,11 +1,8 @@
 import streamlit as st
 from backend.my_lib.retrievers import Retrievers
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
 from backend.settings import is_streamlit_running
 from omegaconf import OmegaConf
+from backend.my_lib.LLMManager import LLMManager
 
 import logging
 
@@ -32,7 +29,9 @@ class QAchains:
     through question shortening and document ranking.
     """
 
-    def __init__(self, retrievers: Retrievers, config: OmegaConf):
+    def __init__(
+        self, retrievers: Retrievers, config: OmegaConf, llm_manager: LLMManager = None
+    ):
         """
         Initializes the QAchain object.
 
@@ -44,13 +43,16 @@ class QAchains:
         self.top_k_final = config.Retrieval.top_k_final
         self.verbose = config.settings.verbose
         self.retrievers = retrievers
-        modelID = config.llm.openai_modelID
-        self.llm = ChatOpenAI(temperature=0.0, model=modelID)
+        if llm_manager is None:
+            self.llm_manager = LLMManager(llm_instance=None)
+        else:
+            self.llm_manager = llm_manager
         self.question = None
         self.shortened_question = None
         self.retrieved_docs = None
         self.top_score_docs = None
         self.response = None
+        self.verbose = config.settings.verbose
 
     def shorten_question(self, question: str) -> None:
         """
@@ -76,19 +78,26 @@ class QAchains:
 
         Original Question: "{original_question}"
 
-        Reformulated phrases: """
+        Reformulated phrases: 
+        """
 
         try:
-            custom_short_prompt = PromptTemplate.from_template(shortening_prompt)
+            # custom_short_prompt = PromptTemplate.from_template(shortening_prompt)
 
-            shortening_chain = (
-                {"original_question": RunnablePassthrough()}
-                | custom_short_prompt
-                | self.llm
-                | StrOutputParser()
+            # shortening_chain = (
+            #     {"original_question": RunnablePassthrough()}
+            #     | custom_short_prompt
+            #     | self.llm
+            #     | StrOutputParser()
+            # )
+            # chain = custom_short_prompt | self.llm | StrOutputParser()
+
+            # shortened_question = shortening_chain.invoke(question)
+            invoke_kwargs = {"original_question": question}
+            shortened_question = self.llm_manager.invoke(
+                shortening_prompt, invoke_kwargs, max_tokens=128, verbose=self.verbose
             )
-
-            shortened_question = shortening_chain.invoke(question)
+            # shortened_question = chain.invoke({"original_question": question})
             # print(shortened_question)
             if is_streamlit_running():
                 st.success(f"The shortened question:\n {shortened_question}")
@@ -130,9 +139,11 @@ class QAchains:
                 shortened_question
             )
             if is_streamlit_running():
-                st.success("The small chunks were retrieved")
+                st.success(f"{len(small_chunks_retrieved)} small chunks were retrieved")
             else:
-                logger.info("The small chunks were retrieved")
+                logger.info(
+                    f"{len(small_chunks_retrieved)} small chunks were retrieved"
+                )
 
             # Calculate DRS for all documents
             documents_selected, DRS_selected_normalized = self.retrievers.calculate_drs(
@@ -148,9 +159,11 @@ class QAchains:
                 question, documents_selected
             )
             if is_streamlit_running():
-                st.success("The large chunks were retrieved")
+                st.success(f"{len(large_chunks_retrieved)} large chunks were retrieved")
             else:
-                logger.info("The large chunks were retrieved")
+                logger.info(
+                    f"{len(large_chunks_retrieved)} large chunks were retrieved"
+                )
 
             # Calculate aggregated scores for small and large chunks
             small_chunks_agg_score = self.retrievers.score_aggregate(
@@ -162,6 +175,7 @@ class QAchains:
                 )
                 for doc in small_chunks_agg_score:
                     logger.info(
+                        "Score: %s, Name: %s, Page: %s, Content: %s",
                         doc.metadata["aggregated_score"],
                         doc.metadata["name"],
                         doc.metadata["page"],
@@ -178,6 +192,7 @@ class QAchains:
                 )
                 for doc in large_chunks_agg_score:
                     logger.info(
+                        "Score: %s, Name: %s, Page: %s, Content: %s",
                         doc.metadata["aggregated_score"],
                         doc.metadata["name"],
                         doc.metadata["page"],
@@ -203,6 +218,7 @@ class QAchains:
                 logger.info("\n === The top score chunks were concatenated ==")
                 for doc in top_score_docs:
                     logger.info(
+                        "Score: %s, Name: %s, Page: %s, Content: %s",
                         doc.metadata["aggregated_score"],
                         doc.metadata["name"],
                         doc.metadata["page"],
@@ -210,9 +226,9 @@ class QAchains:
                     )
 
             if is_streamlit_running():
-                st.success("The top score chunks were concatenated")
+                st.success(f"{len(top_score_docs)} top score chunks were concatenated")
             else:
-                logger.info("The top score chunks were concatenated")
+                logger.info(f"{len(top_score_docs)} top score chunks were concatenated")
 
             self.top_score_docs = top_score_docs
 
@@ -250,14 +266,16 @@ class QAchains:
         """
 
         try:
-            custom_rag_prompt = PromptTemplate.from_template(system_prompt)
-            chain = custom_rag_prompt | self.llm | StrOutputParser()
+            # custom_rag_prompt = PromptTemplate.from_template(system_prompt)
+            # chain = custom_rag_prompt | self.llm | StrOutputParser()
 
             context = "\ndocument_separator: <<<<>>>>>\n".join(
                 doc.page_content for doc in self.top_score_docs
             )
-            response = chain.invoke({"context": context, "question": self.question})
-            self.response = response.strip()
+            # response = chain.invoke({"context": context, "question": self.question})
+            invoke_kwargs = {"context": context, "question": self.question}
+            response = self.llm_manager.invoke(system_prompt, invoke_kwargs)
+            self.response = response
             return self.response
         except Exception as e:
             if is_streamlit_running():

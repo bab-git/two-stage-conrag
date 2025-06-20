@@ -2,11 +2,15 @@
 
 import streamlit as st
 import os
-from backend.my_lib.qa_chains import QAchains
-from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 # logging configured in backend/settings.py
 import logging
+from backend.my_lib.qa_chains import QAchains
+from streamlit.runtime.uploaded_file_manager import UploadedFile
+from dotenv import load_dotenv, find_dotenv
+
+# Load secrets from .env
+load_dotenv(find_dotenv(), override=True)
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +23,7 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
     Display the PDF uploader UI block and return a list of UploadedFile objects
     when the user clicks “Submit PDFs”. Returns None otherwise.
     """
-    st.header("1. Upload PDF Documents")
+    st.header("2. Upload PDF Documents")
     uploaded = st.file_uploader(
         "Upload PDFs files or the folder containing PDFs",
         type="pdf",
@@ -29,9 +33,9 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
     col1, col2, col3 = st.columns([1, 0.31, 1])  # Adjust ratios for spacing
 
     with col1:
-        submit_uploaded = st.button(
-            "📁 Use Uploaded PDFs",
-            help="Use the PDF files you've uploaded above to build the demo.",
+        use_samples = st.button(
+            "📚 Try Sample PDFs",
+            help="Load a set of built-in sample PDFs for quick demo testing.",
             type="primary",
         )
 
@@ -39,9 +43,9 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
         st.markdown("#### or")
 
     with col3:
-        use_samples = st.button(
-            "📚 Try Sample PDFs",
-            help="Load a set of built-in sample PDFs for quick demo testing.",
+        submit_uploaded = st.button(
+            "📁 Use Uploaded PDFs",
+            help="Use the PDF files you've uploaded above to build the demo.",
             type="secondary",
         )
 
@@ -173,7 +177,17 @@ def question_input_output_ui(qa_chains: QAchains) -> tuple[str, str | None]:
         - Shows processing spinners during question processing
         - Displays error messages for empty questions or processing failures
     """
-    st.header("2. Ask a question")
+    st.header("3. Ask a question")
+
+    # ADD DEBUG BUTTON
+    # col1, col2 = st.columns([3, 1])
+    # with col2:
+    #     if st.button("🔄 Clear Model Cache"):
+    #         st.cache_resource.clear()
+    #         st.success("Model cache cleared!")
+    #         st.rerun()
+
+    # with col1:
     question = st.text_input(
         "Enter your question related to the uploaded documents:",
         value="""What are the expectations for the Federal Reserve's interest rate cuts 
@@ -227,17 +241,23 @@ def process_question(question: str, qa_chains: QAchains) -> str | None:
         logger.debug("Debug mode active, returning placeholder answer.")
         return answer
     try:
+        answer = None
         with st.spinner("Shortening question..."):
+            if st.session_state.verbose:
+                st.info(f"question: {question}")
             qa_chains.shorten_question(question)
-            logger.info("Question shortened successfully.")
+            logger.info("========= Question shortened successfully.")
 
         with st.spinner("Searching for relevant documents..."):
             qa_chains.retrieve_context()
-            logger.info("Context retrieved successfully.")
+            logger.info("========= Context retrieved successfully.")
 
         with st.spinner("Generating answer..."):
             answer = qa_chains.generate_answer()
-            logger.info("Answer generated successfully.")
+            logger.info("========= Answer generated successfully.")
+            if st.session_state.verbose:
+                st.info(f"answer: {answer}")
+                print(f"answer: {answer}")
 
     except Exception as e:
         st.error(f"An error occurred while processing the question: {e}")
@@ -283,7 +303,29 @@ def display_results_ui(
         if answer:
             st.subheader("💡 Current Answer")
             # Use smaller text area or expander
-            st.text_area("Your Answer:", value=answer, height=200, key="sidebar_answer")
+            # st.info(answer)
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: #f0f8ff;
+                    border: 1px solid #d1ecf1;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin: 10px 0;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    max-height: 300px;
+                    overflow-y: auto;
+                ">
+                    <p style="
+                        margin: 0;
+                        line-height: 1.6;
+                        color: #333;
+                        font-size: 14px;
+                    ">{answer}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
             logger.info("Displayed current answer.")
             # with st.expander("View Full Answer", expanded=False):
             #     st.write(answer)
@@ -298,3 +340,39 @@ def display_results_ui(
                     # st.markdown(f"**A{idx}:** {a[:100]}{'...' if len(a) > 100 else ''}")  # Truncate long answers
                     st.markdown("---")
             logger.info("Displayed Q&A history.")
+
+
+# ===============================
+# Model Selection
+# ===============================
+def get_openai_key():
+    """
+    1. Reads OPENAI_API_KEY from .env in the repo root (without setting os.environ).
+    2. If missing or equal to "dummy", prompts the user via a Streamlit text_input.
+    3. Returns the key (may be empty if the user hasn’t typed it yet).
+    """
+
+    api_key = os.getenv("OPENAI_API_KEY", "dummy").strip()
+
+    # if it’s not set or is literally "dummy", ask the user
+    if not api_key or api_key.lower() == "dummy":
+        st.sidebar.header("OpenAI API Key")
+        api_key = st.sidebar.text_input(
+            "Enter your OpenAI API Key.",
+            type="password",
+            help="This key will be stored in your environment—just for this session.",
+        ).strip()
+
+    return api_key
+
+
+def select_model_ui():
+    st.header("1. Select LLM Model")
+    model_choice = st.selectbox(
+        "Select LLM Backend", ["Local LLaMA", "OpenAI (GPT-4o-mini)"]
+    )
+    return model_choice
+
+
+# def display_loading_local_model():
+#     st.sidebar.info("Loading local LLaMA model… this may take a moment.")
