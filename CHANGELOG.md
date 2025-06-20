@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [1.0.0] Local Models Support and Enhanced User Experience
+
+### Added
+- **Local Model Support**: Integrated `llama-cpp-python` for running local LLaMA models.
+- **API Key Input**: Streamlit sidebar input for OpenAI API keys with session-based storage.
+- **Model Selection UI**: Dropdown to choose between Local LLaMA and OpenAI GPT models.
+
+### Changed
+- **Dependencies**: Added `llama-cpp-python ^0.3.9`.
+- **Configuration**: Updated `config.yaml` for local model settings.
+- **App Architecture**: Refactored for dynamic model switching and session management.
+
+
 ## [0.3.0] UX Enhancements and Upload Features
 
 ### Added
