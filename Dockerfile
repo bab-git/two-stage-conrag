@@ -1,12 +1,19 @@
 # Stage 1: Build stage with build-tools
 FROM python:3.12-slim AS builder
 RUN apt-get update \
- && apt-get install -y build-essential poppler-utils \
+ && apt-get install -y \
+    build-essential \
+    poppler-utils \
+    git \
+    cmake \
+    pkg-config \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY requirements.txt .
-RUN pip wheel --no-cache-dir --wheel-dir=/wheels -r requirements.txt
+# Filter out llama-cpp-python from requirements
+RUN grep -v "llama-cpp-python" requirements.txt > requirements-docker.txt
+RUN pip wheel --no-cache-dir --wheel-dir=/wheels -r requirements-docker.txt
 
 # Stage 2: Slim runtime
 FROM python:3.12-slim
