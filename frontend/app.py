@@ -39,7 +39,7 @@ def initialize_session_state() -> None:
     st.session_state.setdefault("qa_chains", None)
     st.session_state.setdefault("answer", "")
     st.session_state.setdefault("qa_history", [])
-    st.session_state.setdefault("model_choice", None)
+    st.session_state.setdefault("selected_model", None)
     st.session_state.setdefault("verbose", False)  # Add this line
     st.session_state.setdefault("api_key", None)
     logger.debug("Session state initialized.")
@@ -56,7 +56,8 @@ def load_local_llama(repo_id: str, filename: str) -> Llama:
         # n_batch=512,      # Add this
         verbose=False,
     )
-    st.info(f"Local LLaMA model, {repo_id}, loaded successfully.")
+    with st.sidebar:
+        st.info(f"Local model loaded successfully.")
     return llama_instance
 
 
@@ -150,8 +151,14 @@ def main() -> None:
     initialize_session_state()
     logger.info("Session state initialized successfully.")
 
-    # clear the vector store
-    print("vector_store_cleared:", st.session_state.get("vector_store_cleared", False))
+    # Check verbose mode
+    if config.settings.verbose:
+        st.session_state.verbose = True
+        st.warning("Verbose mode is enabled.")
+    
+    # Clear the vector store if needed
+    if st.session_state.verbose:
+        print("vector_store_cleared:", st.session_state.get("vector_store_cleared", False))
     if (
         not st.session_state.get("vector_store_cleared", False)
         and config.Vectorstore.clear_existing
@@ -159,11 +166,6 @@ def main() -> None:
         shutil.rmtree(config.Vectorstore.persist_directory, ignore_errors=True)
         # rebuild the vector store
         st.session_state.vector_store_cleared = True
-
-    # Check verbos mode
-    if config.settings.verbose:
-        st.session_state.verbose = True
-        st.warning("Verbose mode is enabled.")
 
     # Check debug mode
     if st.session_state.debug:
@@ -179,43 +181,33 @@ def main() -> None:
     # ==============================
     # Model Selection
     # ==============================
-    model_choice = select_model_ui()
+    selected_model = select_model_ui(config)
 
-    if "OpenAI" in model_choice:
-        openai_key = get_openai_key()
-        if not openai_key:
-            st.warning(
-                "Please enter a valid OpenAI API key before proceeding. Key will be stored in your environment—just for this session."
-            )
-            st.stop()
-        llm_instance = None
-        st.session_state["api_key"] = openai_key
-        if st.session_state.verbose:
-            print(
-                f"Debug: =========OpenAI API key loaded successfully end with {openai_key[:10]}...{openai_key[-10:]}"
-            )
-        st.info(
-            f"OpenAI API key loaded successfully end with {openai_key[:10]}...{openai_key[-10:]} \n\n It will be stored in your environment—just for this session."
-        )
-    else:  # Local LLaMA
-        repo_model = config.llm.local_llama_model
-        filename = config.llm.local_llama_filename
-        llm_instance = load_local_llama(repo_model, filename)
+    if not selected_model:
+        st.stop()
+    st.session_state.selected_model = selected_model
+    if st.session_state.verbose:
+        st.info(f"Selected model: {selected_model}")
 
-    if (
-        not st.session_state.get("llm_manager")
-        or st.session_state.model_choice != model_choice
-    ):
-        llm_manager = LLMManager(
-            llm_instance=llm_instance, api_key=st.session_state.api_key
-        )
-        st.session_state.llm_manager = llm_manager
-        st.session_state.model_choice = model_choice
+    # Initialize LLM Manager based on selected model
+    llm_manager = None
+    if selected_model['provider'] == 'llama_cpp':
+        # Load local LLaMA model
+        with st.spinner("Loading local LLaMA model..."):
+            repo_model = selected_model['model_id']
+            filename = selected_model['filename']
+            llama_instance = load_local_llama(repo_model, filename)
+        
+        llm_manager = LLMManager(selected_model)
+        llm_manager.set_llama_instance(llama_instance)
+        
     else:
-        llm_manager = st.session_state.llm_manager
+        # OpenAI or Groq models
+        api_key = selected_model.get('api_key')
+        llm_manager = LLMManager(selected_model, api_key)
 
     if st.session_state.verbose:
-        print("====== Current llm choice and llm_manager:", model_choice, llm_manager)
+        print("====== Current llm choice and llm_manager:", selected_model, llm_manager)
 
     # ==============================
     # PDF Upload and vector store creation

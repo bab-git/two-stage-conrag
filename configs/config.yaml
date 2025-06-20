@@ -1,6 +1,55 @@
 # configs/config.yaml
 settings:
   verbose: False
+  deployment_mode: ${DEPLOYMENT_MODE:local}  # Will read from env variable
+
+# Model configurations for different deployment modes
+models:
+  local:
+    openai:
+      - name: "GPT-4o-mini"
+        model_id: "gpt-4o-mini"
+        provider: "openai"
+        requires_key: true
+      - name: "GPT-4o"
+        model_id: "gpt-4o"
+        provider: "openai"
+        requires_key: true
+    local_llama:
+      - name: "LLaMA 3.2 3B (Local)"
+        model_id: "hugging-quants/Llama-3.2-3B-Instruct-Q4_K_M-GGUF"
+        filename: "*q4_k_m.gguf"
+        provider: "llama_cpp"
+        requires_key: false
+  
+  cloud:
+    openai:
+      - name: "GPT-4o"
+        model_id: "gpt-4o"
+        provider: "openai"
+        requires_key: true
+      - name: "GPT-4o-mini"
+        model_id: "gpt-4o-mini"
+        provider: "openai"
+        requires_key: true
+    groq:
+      - name: "LLaMA 3.1 70B (Groq)"
+        model_id: "llama-3.1-70b-versatile"
+        provider: "groq"
+        requires_key: false
+      - name: "LLaMA 3.1 8B (Groq)"
+        model_id: "llama-3.1-8b-instant"
+        provider: "groq"
+        requires_key: false
+      - name: "Mixtral 8x7B (Groq)"
+        model_id: "mixtral-8x7b-32768"
+        provider: "groq"
+        requires_key: false
+      - name: "Gemma 2 9B (Groq)"
+        model_id: "gemma2-9b-it"
+        provider: "groq"
+        requires_key: false
+
 
 splitter:
   large_chunk_size: 2000
