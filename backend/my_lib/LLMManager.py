@@ -23,7 +23,7 @@ class LLMManager:
     It supports both string prompts and LangChain PromptTemplate objects.
     """
 
-    def __init__(self, llm_instance=None):
+    def __init__(self, llm_instance=None, api_key=None):
         """
         Initialize the LLMManager with a specific LLM instance.
 
@@ -33,7 +33,8 @@ class LLMManager:
         """
         if llm_instance is None:
             # Default to OpenAI if no instance provided
-            self.llm = ChatOpenAI(model="gpt-4o", temperature=0)
+            print(f"Debug: =========OpenAI API key loaded successfully end with {api_key[:10]}...{api_key[-10:]}")
+            self.llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=api_key)
             self.model_type = "openai"
         else:
             self.llm = llm_instance
@@ -68,7 +69,7 @@ class LLMManager:
 
         try:
             if self.model_type == "openai":
-                return self._invoke_openai(prompt, invoke_kwargs)
+                return self._invoke_openai(prompt, invoke_kwargs, verbose=verbose)
             elif self.model_type == "llama_cpp":
                 return self._invoke_llama_cpp(
                     prompt=prompt,
@@ -87,6 +88,7 @@ class LLMManager:
         self,
         system_prompt: Union[str, PromptTemplate, ChatPromptTemplate],
         invoke_kwargs: dict,
+        verbose: bool = False,
     ) -> str:
         """
         Invoke OpenAI model via LangChain.
