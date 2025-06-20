@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 load_dotenv(find_dotenv(), override=True)
 
 
-def validate_env_secrets():
+# Load and validate environment secrets
+def load_and_validate_env_secrets():
     """
     Validates that all required environment variables are present and properly formatted.
 

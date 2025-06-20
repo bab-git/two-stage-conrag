@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from backend.my_lib.pdf_manager import PDFManager
 from backend.my_lib.retrievers import Retrievers
 from backend.my_lib.qa_chains import QAchains
-from backend.settings import validate_env_secrets
+from backend.settings import load_and_validate_env_secrets
 from backend.my_lib.LLMManager import LLMManager
 from helper_gui import (
     question_input_output_ui,
@@ -41,6 +41,7 @@ def initialize_session_state() -> None:
     st.session_state.setdefault("qa_history", [])
     st.session_state.setdefault("model_choice", None)
     st.session_state.setdefault("verbose", False)  # Add this line
+    st.session_state.setdefault("api_key", None)
     logger.debug("Session state initialized.")
 
 
@@ -169,19 +170,17 @@ def main() -> None:
         st.warning("DEBUG MODE is ON")
         logger.debug("Debug mode is enabled.")
 
-    # Validate environment secrets
+    # Loading existing environment secrets
     if not st.session_state.get("env_validated"):
-        validate_env_secrets()
+        load_and_validate_env_secrets()
         st.session_state.env_validated = True
         logger.info("Environment secrets validated successfully.")
-        # st.success("Environment secrets validated successfully!")
 
     # ==============================
     # Model Selection
     # ==============================
     model_choice = select_model_ui()
-    # from helper_gui import get_openai_key
-    # Instantiate the chosen LLM
+
     if "OpenAI" in model_choice:
         openai_key = get_openai_key()
         if not openai_key:
@@ -191,7 +190,13 @@ def main() -> None:
             st.stop()
         llm_instance = None
         st.session_state["api_key"] = openai_key
-        st.info("OpenAI API key loaded successfully end with " + openai_key[-5:])
+        if st.session_state.verbose:
+            print(
+                f"Debug: =========OpenAI API key loaded successfully end with {openai_key[:10]}...{openai_key[-10:]}"
+            )
+        st.info(
+            f"OpenAI API key loaded successfully end with {openai_key[:10]}...{openai_key[-10:]} \n\n It will be stored in your environment—just for this session."
+        )
     else:  # Local LLaMA
         repo_model = config.llm.local_llama_model
         filename = config.llm.local_llama_filename
@@ -201,34 +206,26 @@ def main() -> None:
         not st.session_state.get("llm_manager")
         or st.session_state.model_choice != model_choice
     ):
-        llm_manager = LLMManager(llm_instance=llm_instance)
+        llm_manager = LLMManager(
+            llm_instance=llm_instance, api_key=st.session_state.api_key
+        )
         st.session_state.llm_manager = llm_manager
         st.session_state.model_choice = model_choice
     else:
         llm_manager = st.session_state.llm_manager
-    print("====== Current llm choice and llm_manager:", model_choice, llm_manager)
+
+    if st.session_state.verbose:
+        print("====== Current llm choice and llm_manager:", model_choice, llm_manager)
 
     # ==============================
     # PDF Upload and vector store creation
     # ==============================
-    # pdf_path = pdf_uploader_ui()
     uploaded, pdf_path = pdf_uploader_ui()
     if uploaded is not None:
-        # print(uploaded)
-        # pdf_path = save_uploaded_pdfs(uploaded, "data/uploads")
-        # else:
-        # pdf_path = None
-
-        # Create vector store and retrievers only if the pdfs are uploaded successfully
-        # if pdf_path is not None:
         logger.info("PDF path provided: %s", pdf_path)
         if st.session_state.debug:
             st.write("pdfs path:", pdf_path)
-        # if st.session_state.get("retrievers") is not None:
-        #     st.info(
-        #         "Vector store is already built - you can proceed to ask your question"
-        #     )
-        #     logger.info("Vector store already built, skipping creation.")
+
         pdf_manager, retrievers = vector_store_builder(pdf_path, config, uploaded)
         st.session_state.pdf_manager = pdf_manager
         st.session_state.retrievers = retrievers

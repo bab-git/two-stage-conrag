@@ -170,6 +170,9 @@ make docker-run
 
 This method skips Poetry and uses pip internally with a pinned `requirements.txt` exported from Poetry.
 
+
+**Note:** The current Docker setup does not support the local model (`llama-cpp-python`) due to build constraints. If you require this functionality, please run the application in a local environment as described in the sections above.
+
 ---
 
 ## 🧪 Usage
