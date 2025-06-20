@@ -191,8 +191,12 @@ def main() -> None:
         llm_instance = None
         st.session_state["api_key"] = openai_key
         if st.session_state.verbose:
-            print(f"Debug: =========OpenAI API key loaded successfully end with {openai_key[:10]}...{openai_key[-10:]}")
-        st.info(f"OpenAI API key loaded successfully end with {openai_key[:10]}...{openai_key[-10:]} \n\n It will be stored in your environment—just for this session.")
+            print(
+                f"Debug: =========OpenAI API key loaded successfully end with {openai_key[:10]}...{openai_key[-10:]}"
+            )
+        st.info(
+            f"OpenAI API key loaded successfully end with {openai_key[:10]}...{openai_key[-10:]} \n\n It will be stored in your environment—just for this session."
+        )
     else:  # Local LLaMA
         repo_model = config.llm.local_llama_model
         filename = config.llm.local_llama_filename
@@ -202,7 +206,9 @@ def main() -> None:
         not st.session_state.get("llm_manager")
         or st.session_state.model_choice != model_choice
     ):
-        llm_manager = LLMManager(llm_instance=llm_instance, api_key=st.session_state.api_key)
+        llm_manager = LLMManager(
+            llm_instance=llm_instance, api_key=st.session_state.api_key
+        )
         st.session_state.llm_manager = llm_manager
         st.session_state.model_choice = model_choice
     else:

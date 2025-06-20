@@ -33,7 +33,6 @@ class LLMManager:
         """
         if llm_instance is None:
             # Default to OpenAI if no instance provided
-            print(f"Debug: =========OpenAI API key loaded successfully end with {api_key[:10]}...{api_key[-10:]}")
             self.llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=api_key)
             self.model_type = "openai"
         else:
