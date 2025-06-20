@@ -40,7 +40,9 @@ def initialize_session_state() -> None:
     st.session_state.setdefault("answer", "")
     st.session_state.setdefault("qa_history", [])
     st.session_state.setdefault("selected_model", None)
-    st.session_state.setdefault("verbose", False)  # Add this line
+    st.session_state.setdefault("llm_manager", None)
+    st.session_state.setdefault("model_changed", False)
+    st.session_state.setdefault("verbose", False)
     st.session_state.setdefault("api_key", None)
     logger.debug("Session state initialized.")
 
@@ -185,26 +187,46 @@ def main() -> None:
 
     if not selected_model:
         st.stop()
-    st.session_state.selected_model = selected_model
-    if st.session_state.verbose:
-        st.info(f"Selected model: {selected_model}")
+    
+    # Check if model has changed
+    model_changed = (
+        st.session_state.selected_model is None or 
+        st.session_state.selected_model.get('model_id') != selected_model.get('model_id') or
+        st.session_state.selected_model.get('provider') != selected_model.get('provider')
+    )        
+
+    if model_changed:
+        st.session_state.model_changed = True
+        st.session_state.selected_model = selected_model
+        # Clear existing LLM manager and QA chains when model changes
+        st.session_state.llm_manager = None
+        st.session_state.qa_chains = None
+        
+        if st.session_state.verbose:
+            st.info(f"Model changed to: {selected_model['name']}")
 
     # Initialize LLM Manager based on selected model
-    llm_manager = None
-    if selected_model['provider'] == 'llama_cpp':
-        # Load local LLaMA model
-        with st.spinner("Loading local LLaMA model..."):
-            repo_model = selected_model['model_id']
-            filename = selected_model['filename']
-            llama_instance = load_local_llama(repo_model, filename)
+    if st.session_state.llm_manager is None or model_changed:
+        if selected_model['provider'] == 'llama_cpp':
+            # Load local LLaMA model
+            with st.spinner("Loading local LLaMA model..."):
+                repo_model = selected_model['model_id']
+                filename = selected_model['filename']
+                llama_instance = load_local_llama(repo_model, filename)
+            
+            llm_manager = LLMManager(selected_model)
+            llm_manager.set_llama_instance(llama_instance)
+            
+        else:
+            # OpenAI or Groq models
+            api_key = selected_model.get('api_key')
+            llm_manager = LLMManager(selected_model, api_key)
         
-        llm_manager = LLMManager(selected_model)
-        llm_manager.set_llama_instance(llama_instance)
-        
-    else:
-        # OpenAI or Groq models
-        api_key = selected_model.get('api_key')
-        llm_manager = LLMManager(selected_model, api_key)
+        st.session_state.llm_manager = llm_manager
+        st.session_state.model_changed = False
+
+    # Get the current llm_manager from session state
+    llm_manager = st.session_state.llm_manager
 
     if st.session_state.verbose:
         print("====== Current llm choice and llm_manager:", selected_model, llm_manager)
@@ -222,9 +244,21 @@ def main() -> None:
         st.session_state.pdf_manager = pdf_manager
         st.session_state.retrievers = retrievers
 
-        # Create QA chains
+          # Create QA chains with current LLM manager
         st.session_state.qa_chains = QAchains(retrievers, config, llm_manager)
         st.success("PDFs and vector store processed successfully!")
+        
+    # Always ensure QA chains exist if we have retrievers and LLM manager
+    if (st.session_state.get("retrievers") is not None and 
+        st.session_state.get("llm_manager") is not None and
+        st.session_state.get("qa_chains") is None):
+        
+        st.session_state.qa_chains = QAchains(
+            st.session_state.retrievers, 
+            config, 
+            st.session_state.llm_manager
+        )
+        st.info("QA system initialized with selected model!")
 
     # ==============================
     # Question Section (only if retriever is successfully created)
@@ -234,8 +268,10 @@ def main() -> None:
 
         if answer is not None:
             st.session_state.answer = answer
-            st.session_state.qa_history.append((question, answer))
-            logger.info("Question answered: %s, answer: %s", question, answer)
+            # Store question, answer, and model info
+            model_info = f"{selected_model['name']} ({selected_model['provider']})"
+            st.session_state.qa_history.append((question, answer, model_info))
+            logger.info("Question answered: %s, answer: %s, model: %s", question, answer, model_info)
 
     # ==============================
     # Display answer & history

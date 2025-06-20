@@ -37,7 +37,7 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
 
     with col1:
         use_samples = st.button(
-            "📚 Try Sample PDFs",
+            "📚 Process Sample PDFs",
             help="Load a set of built-in sample PDFs for quick demo testing.",
             type="primary",
         )
@@ -47,7 +47,7 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
 
     with col3:
         submit_uploaded = st.button(
-            "📁 Use Uploaded PDFs",
+            "📁 Process Uploaded PDFs",
             help="Use the PDF files you've uploaded above to build the demo.",
             type="secondary",
         )
@@ -337,10 +337,10 @@ def display_results_ui(
             st.subheader("📚 Q&A History")
             # Use an expander to make it collapsible if the history gets long
             with st.expander("View History", expanded=True):
-                for idx, (q, a) in enumerate(qa_history, 1):
+                for idx, (q, a, model) in enumerate(qa_history, 1):
+                    st.markdown(f"**Model:** `{model}`")
                     st.markdown(f"**Q{idx}:** {q}")
                     st.markdown(f"**A{idx}:** {a}")
-                    # st.markdown(f"**A{idx}:** {a[:100]}{'...' if len(a) > 100 else ''}")  # Truncate long answers
                     st.markdown("---")
             logger.info("Displayed Q&A history.")
 
@@ -476,7 +476,8 @@ def select_model_ui(config: OmegaConf) -> Optional[Dict[str, Any]]:
             "Choose your model:",
             options=model_options,
             index=0,  # Default to first option ("Select a model...")
-            help="Select the model you want to use for question answering."
+            help="Select the model you want to use for question answering.",
+            key="model_selector"  # Add unique key
         )
         
         # Return None if default option is selected

@@ -3,14 +3,16 @@ from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
-# try:
-#     from llama_cpp import Llama
-#     LLAMA_CPP_AVAILABLE = True
-# except ImportError:
-#     LLAMA_CPP_AVAILABLE = False
-#     Llama = None
+# Import Groq integration
+try:
+    from langchain_groq import ChatGroq
+    GROQ_AVAILABLE = True
+except ImportError:
+    GROQ_AVAILABLE = False
 
 import logging
+import os
+import streamlit as st
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,7 @@ class LLMManager:
     It supports both string prompts and LangChain PromptTemplate objects.
     """
 
-    def __init__(self, llm_instance=None, api_key=None, model="gpt-4o-mini"):
+    def __init__(self, model_config: dict, api_key: str = None):
         """
         Initialize the LLMManager with a specific LLM instance.
 
@@ -31,13 +33,62 @@ class LLMManager:
             llm_instance: Either a ChatOpenAI instance or Llama instance
             model_type: "auto", "openai", or "llama_cpp" - determines inference method
         """
-        if llm_instance is None:
-            # Default to OpenAI if no instance provided
-            self.llm = ChatOpenAI(model=model, temperature=0, api_key=api_key)
+        self.model_config = model_config
+        self.provider = model_config.get('provider')
+        self.model_id = model_config.get('model_id')
+        self.requires_key = model_config.get('requires_key', False)
+        
+        # Initialize the appropriate LLM
+        if self.provider == "openai":
+            self.llm = ChatOpenAI(
+                model=self.model_id, 
+                temperature=0, 
+                api_key=api_key
+            )
             self.model_type = "openai"
-        else:
-            self.llm = llm_instance
+
+        elif self.provider == "groq":
+            if not GROQ_AVAILABLE:
+                raise ImportError("langchain-groq is not installed. Install it with: pip install langchain-groq")
+            
+            # Get Groq API key from secrets (for cloud) or environment (for local)
+            groq_key = self._get_groq_api_key()
+            if not groq_key:
+                raise ValueError("Groq API key not found. Please check your environment variables or Streamlit secrets.")
+            
+            self.llm = ChatGroq(
+                model=self.model_id,
+                temperature=0,
+                api_key=groq_key
+            )
+            self.model_type = "groq"    
+
+        elif self.provider == "llama_cpp":
+            # For local LLaMA models, llm_instance should be passed separately
+            self.llm = None  # Will be set later
             self.model_type = "llama_cpp"
+            
+        else:
+            raise ValueError(f"Unsupported provider: {self.provider}")
+
+    def _get_groq_api_key(self) -> str:
+        """Get Groq API key from Streamlit secrets or environment variables."""
+        # Try Streamlit secrets first (for cloud deployment)
+        try:
+            if hasattr(st, 'secrets') and 'GROQ_API_KEY' in st.secrets:
+                return st.secrets['GROQ_API_KEY']
+        except:
+            pass
+        
+        # Fall back to environment variable
+        return os.getenv('GROQ_API_KEY', '')
+
+    def set_llama_instance(self, llama_instance):
+        """Set the LLaMA instance for local models."""
+        if self.provider == "llama_cpp":
+            self.llm = llama_instance
+        else:
+            raise ValueError("set_llama_instance can only be called for llama_cpp provider")
 
     def invoke(
         self,
@@ -67,8 +118,8 @@ class LLMManager:
         #     current_model_type = self.model_type
 
         try:
-            if self.model_type == "openai":
-                return self._invoke_openai(prompt, invoke_kwargs, verbose=verbose)
+            if self.model_type in ["openai", "groq"]:
+                return self._invoke_langchain(prompt, invoke_kwargs, verbose=verbose)
             elif self.model_type == "llama_cpp":
                 return self._invoke_llama_cpp(
                     prompt=prompt,
@@ -83,19 +134,19 @@ class LLMManager:
             logger.error(f"Error during LLM invocation: {e}")
             raise
 
-    def _invoke_openai(
+    def _invoke_langchain(
         self,
         system_prompt: Union[str, PromptTemplate, ChatPromptTemplate],
         invoke_kwargs: dict,
         verbose: bool = False,
     ) -> str:
         """
-        Invoke OpenAI model via LangChain.
+        Invoke OpenAI or Groq model via LangChain.
 
         Args:
-            llm_instance: ChatOpenAI instance
-            prompt: Prompt template or string
-            **kwargs: Parameters for prompt formatting
+            system_prompt: Prompt template or string
+            invoke_kwargs: Parameters for prompt formatting
+            verbose: Enable verbose logging
 
         Returns:
             str: Generated response
@@ -113,6 +164,10 @@ class LLMManager:
         # Invoke the chain
         response = chain.invoke(invoke_kwargs)
         response = response.strip()
+
+        if verbose:
+            print(f"LLM Response from {self.provider}: {response[:100]}...")
+
         return response
 
     def _invoke_llama_cpp(

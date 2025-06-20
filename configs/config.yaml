@@ -1,6 +1,6 @@
 # configs/config.yaml
 settings:
-  verbose: False
+  verbose: True
   deployment_mode: ${DEPLOYMENT_MODE:local}  # Will read from env variable
 
 # Model configurations for different deployment modes
