@@ -1,6 +1,7 @@
 # configs/config.yaml
 settings:
   verbose: False
+
 splitter:
   large_chunk_size: 2000
   small_chunk_size: 400 # chunk size for keyword search. small enough to capture a few sentenses
@@ -11,7 +12,7 @@ llm:
   openai_modelID : "gpt-4o-mini" #or gpt-4o
   # embed_model_id: 'sentence-transformers/all-mpnet-base-v2'
   embed_model_id: sentence-transformers/all-MiniLM-L12-v2 # embedding model for creating vector database for semantic search
-  local_llama_model: "hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF"
+  local_llama_model: "hugging-quants/Llama-3.2-3B-Instruct-Q4_K_M-GGUF"
   local_llama_filename: "*q4_k_m.gguf"
 
 Vectorstore:  

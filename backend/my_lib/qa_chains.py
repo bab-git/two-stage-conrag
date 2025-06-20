@@ -1,9 +1,5 @@
 import streamlit as st
 from backend.my_lib.retrievers import Retrievers
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
 from backend.settings import is_streamlit_running
 from omegaconf import OmegaConf
 from backend.my_lib.LLMManager import LLMManager
@@ -33,7 +29,9 @@ class QAchains:
     through question shortening and document ranking.
     """
 
-    def __init__(self, retrievers: Retrievers, config: OmegaConf, llm_manager: LLMManager = None):
+    def __init__(
+        self, retrievers: Retrievers, config: OmegaConf, llm_manager: LLMManager = None
+    ):
         """
         Initializes the QAchain object.
 
@@ -45,8 +43,8 @@ class QAchains:
         self.top_k_final = config.Retrieval.top_k_final
         self.verbose = config.settings.verbose
         self.retrievers = retrievers
-        if llm_manager is None:            
-            self.llm_manager = LLMManager(llm_instance = None)
+        if llm_manager is None:
+            self.llm_manager = LLMManager(llm_instance=None)
         else:
             self.llm_manager = llm_manager
         self.question = None
@@ -54,6 +52,7 @@ class QAchains:
         self.retrieved_docs = None
         self.top_score_docs = None
         self.response = None
+        self.verbose = config.settings.verbose
 
     def shorten_question(self, question: str) -> None:
         """
@@ -95,7 +94,9 @@ class QAchains:
 
             # shortened_question = shortening_chain.invoke(question)
             invoke_kwargs = {"original_question": question}
-            shortened_question = self.llm_manager.invoke(shortening_prompt, invoke_kwargs)
+            shortened_question = self.llm_manager.invoke(
+                shortening_prompt, invoke_kwargs, max_tokens=128, verbose=self.verbose
+            )
             # shortened_question = chain.invoke({"original_question": question})
             # print(shortened_question)
             if is_streamlit_running():
@@ -138,9 +139,11 @@ class QAchains:
                 shortened_question
             )
             if is_streamlit_running():
-                st.success("The small chunks were retrieved")
+                st.success(f"{len(small_chunks_retrieved)} small chunks were retrieved")
             else:
-                logger.info("The small chunks were retrieved")
+                logger.info(
+                    f"{len(small_chunks_retrieved)} small chunks were retrieved"
+                )
 
             # Calculate DRS for all documents
             documents_selected, DRS_selected_normalized = self.retrievers.calculate_drs(
@@ -156,9 +159,11 @@ class QAchains:
                 question, documents_selected
             )
             if is_streamlit_running():
-                st.success("The large chunks were retrieved")
+                st.success(f"{len(large_chunks_retrieved)} large chunks were retrieved")
             else:
-                logger.info("The large chunks were retrieved")
+                logger.info(
+                    f"{len(large_chunks_retrieved)} large chunks were retrieved"
+                )
 
             # Calculate aggregated scores for small and large chunks
             small_chunks_agg_score = self.retrievers.score_aggregate(
@@ -170,6 +175,7 @@ class QAchains:
                 )
                 for doc in small_chunks_agg_score:
                     logger.info(
+                        "Score: %s, Name: %s, Page: %s, Content: %s",
                         doc.metadata["aggregated_score"],
                         doc.metadata["name"],
                         doc.metadata["page"],
@@ -186,6 +192,7 @@ class QAchains:
                 )
                 for doc in large_chunks_agg_score:
                     logger.info(
+                        "Score: %s, Name: %s, Page: %s, Content: %s",
                         doc.metadata["aggregated_score"],
                         doc.metadata["name"],
                         doc.metadata["page"],
@@ -211,6 +218,7 @@ class QAchains:
                 logger.info("\n === The top score chunks were concatenated ==")
                 for doc in top_score_docs:
                     logger.info(
+                        "Score: %s, Name: %s, Page: %s, Content: %s",
                         doc.metadata["aggregated_score"],
                         doc.metadata["name"],
                         doc.metadata["page"],
@@ -218,9 +226,9 @@ class QAchains:
                     )
 
             if is_streamlit_running():
-                st.success("The top score chunks were concatenated")
+                st.success(f"{len(top_score_docs)} top score chunks were concatenated")
             else:
-                logger.info("The top score chunks were concatenated")
+                logger.info(f"{len(top_score_docs)} top score chunks were concatenated")
 
             self.top_score_docs = top_score_docs
 

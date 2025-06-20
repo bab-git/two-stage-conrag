@@ -112,13 +112,14 @@ class Retrievers:
 
             # for debugging:
             if self.verbose:
-                logger.info("\n", len(small_chunks_retrieved), "small chunks retrieved")
+                logger.info(f"\n{len(small_chunks_retrieved)} small chunks retrieved")
                 logger.info("\n ==== Samples of retrieved small chunks ==== \n")
                 for chunk in small_chunks_retrieved[:3]:
                     logger.info(
+                        "Name: %s, Page: %s, Score: %s, Content: %s",
                         chunk.metadata["name"],
-                        f"page:{chunk.metadata['page']}",
-                        f"score:{chunk.metadata['score']}",
+                        chunk.metadata["page"],
+                        chunk.metadata["score"],
                         chunk.page_content[:20],
                     )
 
@@ -188,7 +189,9 @@ class Retrievers:
             if self.verbose:
                 logger.info("\n ==== Sorted DRS documents ====")
                 for doc in DRS_documents_sorted:
-                    logger.info(doc[0], f'score:{doc[1]['score']}, N:{doc[1]["N"]}')
+                    logger.info(
+                        f'name:{doc[0]}, score:{doc[1]["score"]}, N:{doc[1]["N"]}'
+                    )
 
             # selecting documents
             documents_selected = [
@@ -198,7 +201,7 @@ class Retrievers:
             if self.verbose:
                 logger.info("\n ==== Selected documents ====")
                 for document in documents_selected:
-                    logger.info(document)
+                    logger.info("Selected document: %s", document)
 
             # normalized DRS: divide DRS by max DRS
             DRS_selected = DRS_documents_sorted[: self.top_k_documents]
@@ -296,7 +299,10 @@ class Retrievers:
                 ]
                 if self.verbose:
                     logger.info(
-                        f"{rank['score']:.2f}\t{large_chunks_retrieved[rank['corpus_id']].metadata}, {large_chunks_retrieved[rank['corpus_id']].page_content[:10]} "
+                        "Score: %.2f, Metadata: %s, Content: %s",
+                        rank["score"],
+                        large_chunks_retrieved[rank["corpus_id"]].metadata,
+                        large_chunks_retrieved[rank["corpus_id"]].page_content[:10],
                     )
 
             return large_chunks_retrieved
