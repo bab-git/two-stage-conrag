@@ -24,29 +24,33 @@ models:
   
   cloud:
     openai:
-      - name: "GPT-4o"
-        model_id: "gpt-4o"
-        provider: "openai"
-        requires_key: true
       - name: "GPT-4o-mini"
         model_id: "gpt-4o-mini"
         provider: "openai"
         requires_key: true
+      - name: "GPT-4o"
+        model_id: "gpt-4o"
+        provider: "openai"
+        requires_key: true
     groq:
-      - name: "LLaMA 3.1 70B (Groq)"
-        model_id: "llama-3.1-70b-versatile"
+      - name: "LLaMA 3.3 70B Versatile"
+        model_id: "llama-3.3-70b-versatile"
         provider: "groq"
         requires_key: false
-      - name: "LLaMA 3.1 8B (Groq)"
-        model_id: "llama-3.1-8b-instant"
+      - name: "LLaMA 4 Scout 17B (30K Context)"
+        model_id: "meta-llama/llama-4-scout-17b-16e-instruct"
         provider: "groq"
         requires_key: false
-      - name: "Mixtral 8x7B (Groq)"
-        model_id: "mixtral-8x7b-32768"
+      - name: "Mistral Saba 24B"
+        model_id: "mistral-saba-24b"
         provider: "groq"
         requires_key: false
-      - name: "Gemma 2 9B (Groq)"
+      - name: "Gemma 2 9B IT"
         model_id: "gemma2-9b-it"
+        provider: "groq"
+        requires_key: false
+      - name: "LLaMA 3.1 8B Instant"
+        model_id: "llama-3.1-8b-instant"
         provider: "groq"
         requires_key: false
 
