@@ -7,6 +7,7 @@ from omegaconf import OmegaConf
 # Conditional import for llama_cpp (only needed for local deployment)
 try:
     from llama_cpp import Llama
+
     LLAMA_CPP_AVAILABLE = True
 except ImportError:
     LLAMA_CPP_AVAILABLE = False
@@ -57,7 +58,9 @@ def initialize_session_state() -> None:
 @st.cache_resource
 def load_local_llama(repo_id: str, filename: str) -> Llama:
     if not LLAMA_CPP_AVAILABLE:
-        raise ImportError("llama-cpp-python is not available. This is expected for cloud deployment.")
+        raise ImportError(
+            "llama-cpp-python is not available. This is expected for cloud deployment."
+        )
 
     llama_instance = Llama.from_pretrained(
         repo_id=repo_id,
