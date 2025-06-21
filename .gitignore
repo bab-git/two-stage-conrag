@@ -15,6 +15,10 @@ outputs/
 # Environment
 .*env/
 *.env
+!.env_example
+
+# Streamlit secrets (if accidentally created locally)
+.streamlit/secrets.toml
 
 # Data and Storage
 data/*

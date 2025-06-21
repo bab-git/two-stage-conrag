@@ -384,8 +384,16 @@ def display_results_ui(
 # Model Selection
 # ===============================
 def get_deployment_mode() -> str:
-    """Get current deployment mode from environment."""
-    return os.getenv("DEPLOYMENT_MODE", "local").lower()
+    """Get deployment mode from environment or Streamlit secrets."""
+    # Try Streamlit secrets first (for cloud deployment)
+    try:
+        if hasattr(st, 'secrets') and 'DEPLOYMENT_MODE' in st.secrets:
+            return st.secrets['DEPLOYMENT_MODE']
+    except (AttributeError, KeyError):
+        pass
+    
+    # Fallback to environment variable (for local development)
+    return os.getenv('DEPLOYMENT_MODE', 'local')
 
 
 def load_model_configs(config: OmegaConf) -> Dict[str, List[Dict]]:
