@@ -3,7 +3,14 @@ import sys
 import shutil
 import streamlit as st
 from omegaconf import OmegaConf
-from llama_cpp import Llama
+
+# Conditional import for llama_cpp (only needed for local deployment)
+try:
+    from llama_cpp import Llama
+    LLAMA_CPP_AVAILABLE = True
+except ImportError:
+    LLAMA_CPP_AVAILABLE = False
+    Llama = None
 
 # Ensure the root directory is on the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -49,6 +56,9 @@ def initialize_session_state() -> None:
 # Cache this resource so it's only loaded once per session
 @st.cache_resource
 def load_local_llama(repo_id: str, filename: str) -> Llama:
+    if not LLAMA_CPP_AVAILABLE:
+        raise ImportError("llama-cpp-python is not available. This is expected for cloud deployment.")
+
     llama_instance = Llama.from_pretrained(
         repo_id=repo_id,
         filename=filename,
