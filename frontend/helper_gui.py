@@ -191,11 +191,14 @@ def question_input_output_ui(qa_chains: QAchains) -> tuple[str, str | None]:
     #         st.rerun()
 
     # with col1:
-    question = st.text_input(
+    question = st.text_area(
         "Enter your question related to the uploaded documents:",
-        value="""What are the expectations for the Federal Reserve's interest rate cuts 
-according to David Sekera, and how do these expectations relate to the 
+        value="""What are the expectations for the Federal Reserve's interest rate cuts \
+according to David Sekera, and how do these expectations relate to the \
 upcoming Fed meetings and inflation data?""",
+        height=80,  # Initial height (can be adjusted)
+        # max_chars=1000,  # Optional: limit character count
+        help="You can expand this field by dragging the bottom-right corner"
     )
 
     answer = None
@@ -203,11 +206,31 @@ upcoming Fed meetings and inflation data?""",
         if question.strip():
             logger.info("Question submitted: %s", question)
             answer = process_question(question, qa_chains)
+
+            # Display selected documents after processing
+            # if hasattr(qa_chains, 'selected_documents') and qa_chains.selected_documents:
+                # display_selected_documents(qa_chains.selected_documents, qa_chains.drs_scores)
+
         else:
             st.error("Please enter a question.")
             logger.warning("Empty question submitted.")
     return question.strip(), answer
 
+def display_selected_documents(selected_documents: list[str], drs_scores: dict[str, float]) -> None:
+    """
+    Display the selected documents with DRS scores in a simple expandable list.
+    
+    Args:
+        selected_documents: List of selected document names
+        drs_scores: Dictionary of document names and their normalized DRS scores
+    """
+    if not selected_documents:
+        return
+        
+    with st.expander(f"📄 Selected Documents ({len(selected_documents)})", expanded=False):
+        for i, doc_name in enumerate(selected_documents, 1):
+            score = drs_scores.get(doc_name, 0.0)
+            st.write(f"{i}. {doc_name} - DRS: {score:.3f}")
 
 # ===============================
 # Process question
@@ -254,6 +277,10 @@ def process_question(question: str, qa_chains: QAchains) -> str | None:
         with st.spinner("Searching for relevant documents..."):
             qa_chains.retrieve_context()
             logger.info("========= Context retrieved successfully.")
+
+            # # Display selected documents after retrieval
+            # if hasattr(qa_chains, 'selected_documents') and qa_chains.selected_documents:
+            #     display_selected_documents(qa_chains.selected_documents, qa_chains.drs_scores)
 
         with st.spinner("Generating answer..."):
             answer = qa_chains.generate_answer()

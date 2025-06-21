@@ -53,6 +53,8 @@ class QAchains:
         self.top_score_docs = None
         self.response = None
         self.verbose = config.settings.verbose
+        self.selected_documents = None
+        self.drs_scores = None
 
     def shorten_question(self, question: str) -> None:
         """
@@ -149,8 +151,20 @@ class QAchains:
             documents_selected, DRS_selected_normalized = self.retrievers.calculate_drs(
                 small_chunks_retrieved
             )
+
+            # Store the selected documents and their scores
+            self.selected_documents = documents_selected
+            self.drs_scores = DRS_selected_normalized
+
             if is_streamlit_running():
                 st.success("The DRS was calculated for relevant PDF documents")
+
+                # Display selected documents here - after DRS calculation
+                if self.selected_documents:
+                    with st.expander(f"📄 Selected Documents ({len(self.selected_documents)})", expanded=False):
+                        for i, doc_name in enumerate(self.selected_documents, 1):
+                            score = self.drs_scores.get(doc_name, 0.0)
+                            st.write(f"{i}. {doc_name} - DRS: {score:.3f}")
             else:
                 logger.info("The DRS was calculated for relevant PDF documents")
 
@@ -203,6 +217,24 @@ class QAchains:
                 st.success(
                     "The aggregated scores were calculated for all retrieved chunks"
                 )
+
+                # Display top 3 chunks here - after aggregated scores calculation
+                all_chunks = large_chunks_agg_score + small_chunks_agg_score
+                top_3_chunks = sorted(all_chunks, key=lambda x: x.metadata["aggregated_score"], reverse=True)[:3]
+                
+                if top_3_chunks:
+                    with st.expander(f"🏆 Top 3 Chunks (Highest Scores)", expanded=False):
+                        for i, chunk in enumerate(top_3_chunks, 1):
+                            score = chunk.metadata.get("aggregated_score", 0.0)
+                            doc_name = chunk.metadata.get("name", "Unknown")
+                            page = chunk.metadata.get("page", "N/A")
+                            content_preview = chunk.page_content[:300] + "..." if len(chunk.page_content) > 300 else chunk.page_content
+                            
+                            st.write(f"**#{i} - Score: {score:.3f}**")
+                            st.write(f"📄 Document: {doc_name} (Page: {page})")
+                            st.write(f"📝 Content: {content_preview}")
+                            if i < len(top_3_chunks):  # Don't add separator after last item
+                                st.write("---")
             else:
                 logger.info(
                     "The aggregated scores were calculated for all retrieved chunks"

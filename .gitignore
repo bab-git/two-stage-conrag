@@ -17,7 +17,9 @@ outputs/
 *.env
 
 # Data and Storage
-data/
+data/*
+!data/sample_pdfs/
+!data/sample_pdfs/**
 chroma*/
 vector_store/
 models/
