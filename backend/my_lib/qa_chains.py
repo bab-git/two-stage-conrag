@@ -44,7 +44,13 @@ class QAchains:
         self.verbose = config.settings.verbose
         self.retrievers = retrievers
         if llm_manager is None:
-            self.llm_manager = LLMManager(llm_instance=None)
+            # a default model config for fallback
+            default_model_config = {
+                "name": "GPT-4o-mini",
+                "model_id": "gpt-4o-mini",
+                "provider": "openai",
+            }
+            self.llm_manager = LLMManager(default_model_config)
         else:
             self.llm_manager = llm_manager
         self.question = None
@@ -161,7 +167,10 @@ class QAchains:
 
                 # Display selected documents here - after DRS calculation
                 if self.selected_documents:
-                    with st.expander(f"📄 Selected Documents ({len(self.selected_documents)})", expanded=False):
+                    with st.expander(
+                        f"📄 Selected Documents ({len(self.selected_documents)})",
+                        expanded=False,
+                    ):
                         for i, doc_name in enumerate(self.selected_documents, 1):
                             score = self.drs_scores.get(doc_name, 0.0)
                             st.write(f"{i}. {doc_name} - DRS: {score:.3f}")
@@ -220,20 +229,32 @@ class QAchains:
 
                 # Display top 3 chunks here - after aggregated scores calculation
                 all_chunks = large_chunks_agg_score + small_chunks_agg_score
-                top_3_chunks = sorted(all_chunks, key=lambda x: x.metadata["aggregated_score"], reverse=True)[:3]
-                
+                top_3_chunks = sorted(
+                    all_chunks,
+                    key=lambda x: x.metadata["aggregated_score"],
+                    reverse=True,
+                )[:3]
+
                 if top_3_chunks:
-                    with st.expander(f"🏆 Top 3 Chunks (Highest Scores)", expanded=False):
+                    with st.expander(
+                        "🏆 Top 3 Chunks (Highest Scores)", expanded=False
+                    ):
                         for i, chunk in enumerate(top_3_chunks, 1):
                             score = chunk.metadata.get("aggregated_score", 0.0)
                             doc_name = chunk.metadata.get("name", "Unknown")
                             page = chunk.metadata.get("page", "N/A")
-                            content_preview = chunk.page_content[:300] + "..." if len(chunk.page_content) > 300 else chunk.page_content
-                            
+                            content_preview = (
+                                chunk.page_content[:300] + "..."
+                                if len(chunk.page_content) > 300
+                                else chunk.page_content
+                            )
+
                             st.write(f"**#{i} - Score: {score:.3f}**")
                             st.write(f"📄 Document: {doc_name} (Page: {page})")
                             st.write(f"📝 Content: {content_preview}")
-                            if i < len(top_3_chunks):  # Don't add separator after last item
+                            if i < len(
+                                top_3_chunks
+                            ):  # Don't add separator after last item
                                 st.write("---")
             else:
                 logger.info(

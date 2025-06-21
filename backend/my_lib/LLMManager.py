@@ -6,6 +6,7 @@ from langchain_core.output_parsers import StrOutputParser
 # Import Groq integration
 try:
     from langchain_groq import ChatGroq
+
     GROQ_AVAILABLE = True
 except ImportError:
     GROQ_AVAILABLE = False
@@ -34,40 +35,36 @@ class LLMManager:
             model_type: "auto", "openai", or "llama_cpp" - determines inference method
         """
         self.model_config = model_config
-        self.provider = model_config.get('provider')
-        self.model_id = model_config.get('model_id')
-        self.requires_key = model_config.get('requires_key', False)
-        
+        self.provider = model_config.get("provider")
+        self.model_id = model_config.get("model_id")
+        self.requires_key = model_config.get("requires_key", False)
+
         # Initialize the appropriate LLM
         if self.provider == "openai":
-            self.llm = ChatOpenAI(
-                model=self.model_id, 
-                temperature=0, 
-                api_key=api_key
-            )
+            self.llm = ChatOpenAI(model=self.model_id, temperature=0, api_key=api_key)
             self.model_type = "openai"
 
         elif self.provider == "groq":
             if not GROQ_AVAILABLE:
-                raise ImportError("langchain-groq is not installed. Install it with: pip install langchain-groq")
-            
+                raise ImportError(
+                    "langchain-groq is not installed. Install it with: pip install langchain-groq"
+                )
+
             # Get Groq API key from secrets (for cloud) or environment (for local)
             groq_key = self._get_groq_api_key()
             if not groq_key:
-                raise ValueError("Groq API key not found. Please check your environment variables or Streamlit secrets.")
-            
-            self.llm = ChatGroq(
-                model=self.model_id,
-                temperature=0,
-                api_key=groq_key
-            )
-            self.model_type = "groq"    
+                raise ValueError(
+                    "Groq API key not found. Please check your environment variables or Streamlit secrets."
+                )
+
+            self.llm = ChatGroq(model=self.model_id, temperature=0, api_key=groq_key)
+            self.model_type = "groq"
 
         elif self.provider == "llama_cpp":
             # For local LLaMA models, llm_instance should be passed separately
             self.llm = None  # Will be set later
             self.model_type = "llama_cpp"
-            
+
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -75,20 +72,22 @@ class LLMManager:
         """Get Groq API key from Streamlit secrets or environment variables."""
         # Try Streamlit secrets first (for cloud deployment)
         try:
-            if hasattr(st, 'secrets') and 'GROQ_API_KEY' in st.secrets:
-                return st.secrets['GROQ_API_KEY']
-        except:
+            if hasattr(st, "secrets") and "GROQ_API_KEY" in st.secrets:
+                return st.secrets["GROQ_API_KEY"]
+        except (AttributeError, KeyError):
             pass
-        
+
         # Fall back to environment variable
-        return os.getenv('GROQ_API_KEY', '')
+        return os.getenv("GROQ_API_KEY", "")
 
     def set_llama_instance(self, llama_instance):
         """Set the LLaMA instance for local models."""
         if self.provider == "llama_cpp":
             self.llm = llama_instance
         else:
-            raise ValueError("set_llama_instance can only be called for llama_cpp provider")
+            raise ValueError(
+                "set_llama_instance can only be called for llama_cpp provider"
+            )
 
     def invoke(
         self,
