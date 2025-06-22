@@ -1,5 +1,7 @@
 # ==============================
-# The dependencies for the CLOUD deployment
+# The dependencies for the CLOUD deployment through streamlit cloud
+# The limitation for the sqlite3 is that it's required version for chromadb is not supported on streamlit cloud
+# As the solution, we use pysqlite3-binary to replace sqlite3 on streamlit cloud
 # ==============================
 pysqlite3-binary #replace sqlite3 with pysqlite3-binary on streamlit cloud
 

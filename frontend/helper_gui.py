@@ -402,13 +402,13 @@ def load_model_configs(config: OmegaConf) -> Dict[str, List[Dict]]:
 
     if deployment_mode == "local":
         return {
-            "OpenAI Models": config.models.local.openai,
-            "Local Models": config.models.local.local_llama,
+            "[Paid] OpenAI Models": config.models.local.openai,
+            "[Free] Local Models": config.models.local.local_llama,
         }
     else:  # cloud
         return {
-            "OpenAI Models": config.models.cloud.openai,
-            "Groq Models (Free)": config.models.cloud.groq,
+            "[Paid] OpenAI Models": config.models.cloud.openai,
+            "[Free] Groq Models": config.models.cloud.groq,
         }
 
 
