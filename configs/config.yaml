@@ -33,12 +33,12 @@ models:
         provider: "openai"
         requires_key: true
     groq:
-      - name: "LLaMA 3.3 70B Versatile"
-        model_id: "llama-3.3-70b-versatile"
-        provider: "groq"
-        requires_key: false
       - name: "LLaMA 4 Scout 17B (30K Context)"
         model_id: "meta-llama/llama-4-scout-17b-16e-instruct"
+        provider: "groq"
+        requires_key: false    
+      - name: "LLaMA 3.3 70B Versatile"
+        model_id: "llama-3.3-70b-versatile"
         provider: "groq"
         requires_key: false
       - name: "Mistral Saba 24B"
