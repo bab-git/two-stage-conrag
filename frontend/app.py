@@ -1,5 +1,16 @@
-import os
 import sys
+
+try:
+    # if pysqlite3 exists (i.e. you have installed it), load and swap it in
+    __import__("pysqlite3")
+    sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+    # Optionally log so you know it happened:
+    print("🔄 Overriding stdlib sqlite3 with pysqlite3")
+except ImportError:
+    # no pysqlite3 installed → skip the swap (use system sqlite3)
+    pass
+
+import os
 import shutil
 import streamlit as st
 from omegaconf import OmegaConf
