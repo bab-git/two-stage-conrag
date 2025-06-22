@@ -1,6 +1,7 @@
 # ==============================
 # The dependencies for the CLOUD deployment
 # ==============================
+pysqlite3-binary #replace sqlite3 with pysqlite3-binary on streamlit cloud
 
 # Core Streamlit and web framework
 streamlit==1.45.1
