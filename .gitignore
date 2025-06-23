@@ -15,9 +15,15 @@ outputs/
 # Environment
 .*env/
 *.env
+!.env_example
+
+# Streamlit secrets (if accidentally created locally)
+.streamlit/secrets.toml
 
 # Data and Storage
-data/
+data/*
+!data/sample_pdfs/
+!data/sample_pdfs/**
 chroma*/
 vector_store/
 models/

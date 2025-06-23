@@ -7,7 +7,9 @@ help:
 	@echo "Available targets:"
 	@echo "  install         Set up virtual environment and install requirements"
 	@echo "  install-dev     Set up virtual environment and install development requirements"
-	@echo "  export-reqs     Export pinned requirements.txt from Poetry lock"
+	@echo ""
+	@echo "  export-local    Export requirements-local.txt (with llama-cpp-python)"
+	@echo "  export-cloud    Export requirements.txt (without llama-cpp-python)"
 	@echo ""
 	@echo "  run             Run Streamlit app (frontend/app.py)"
 	@echo ""
@@ -26,7 +28,7 @@ IMAGE_NAME := two-stage-conrag
 IMAGE_TAG  := latest
 
 # Phony targets: These targets are not files, so make will always run them
-.PHONY: help run install-dev install lint format test clean export-reqs docker-build docker-run docker-stop
+.PHONY: help run install-dev install install-cloud lint format test clean export-local export-cloud docker-build docker-run docker-stop
 
 # Launch the Streamlit UI inside Poetry's venv
 run:
@@ -37,13 +39,19 @@ run:
 install-dev:
 	@echo "Installing all dependencies (dev + prod) via Poetry"
 	poetry config virtualenvs.in-project true --local
-	poetry install
+	poetry install --with local
 
 # Create venv & install only production dependencies
 install:
-	@echo "Installing production dependencies only"
+	@echo "Installing production dependencies (including llama-cpp-python)"
 	poetry config virtualenvs.in-project true --local
-	poetry install --without dev
+	poetry install --without dev --with local
+
+# Create venv & install for cloud deployment (without llama-cpp-python)
+install-cloud:
+	@echo "Installing dependencies for cloud deployment (without llama-cpp-python)"
+	poetry config virtualenvs.in-project true --local
+	poetry install --without dev --without local --with cloud
 
 # Code linting (using Ruff inside the venv)
 lint:
@@ -65,8 +73,14 @@ test:
 		--cov-report=term-missing
 
 # Export requirements.txt
-export-reqs:
-	poetry export -f requirements.txt --output requirements.txt --without-hashes
+export-local:
+	@echo "Exporting requirements for local deployment (with llama-cpp-python)"
+	poetry export -f requirements.txt --output requirements-local.txt --without-hashes --with local
+
+export-cloud:
+	@echo "Exporting requirements for cloud deployment (with pysqlite3-binary, without llama-cpp-python)"
+	poetry export -f requirements.txt --output requirements.txt --without-hashes --without local --with cloud
+
 
 # Docker-related targets
 docker-build:
@@ -87,3 +101,5 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -r {} + 
 	find . -type f -name "*.pyc" -delete
 	rm -rf .pytest_cache .ruff_cache .mypy_cache
+	rm -rf .venv
+	@echo "Cleaned up cache files and virtual environment"

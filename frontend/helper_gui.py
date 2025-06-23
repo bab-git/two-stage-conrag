@@ -2,12 +2,17 @@
 
 import streamlit as st
 import os
+from typing import Dict, List, Any, Tuple, Optional
 
 # logging configured in backend/settings.py
 import logging
 from backend.my_lib.qa_chains import QAchains
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 from dotenv import load_dotenv, find_dotenv
+
+# importing OmegaConf for loading model configs
+from omegaconf import OmegaConf
+
 
 # Load secrets from .env
 load_dotenv(find_dotenv(), override=True)
@@ -23,7 +28,7 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
     Display the PDF uploader UI block and return a list of UploadedFile objects
     when the user clicks “Submit PDFs”. Returns None otherwise.
     """
-    st.header("2. Upload PDF Documents")
+    st.header("1. Upload PDF Documents")
     uploaded = st.file_uploader(
         "Upload PDFs files or the folder containing PDFs",
         type="pdf",
@@ -34,7 +39,7 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
 
     with col1:
         use_samples = st.button(
-            "📚 Try Sample PDFs",
+            "📚 Process Sample PDFs",
             help="Load a set of built-in sample PDFs for quick demo testing.",
             type="primary",
         )
@@ -44,7 +49,7 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
 
     with col3:
         submit_uploaded = st.button(
-            "📁 Use Uploaded PDFs",
+            "📁 Process Uploaded PDFs",
             help="Use the PDF files you've uploaded above to build the demo.",
             type="secondary",
         )
@@ -177,7 +182,7 @@ def question_input_output_ui(qa_chains: QAchains) -> tuple[str, str | None]:
         - Shows processing spinners during question processing
         - Displays error messages for empty questions or processing failures
     """
-    st.header("3. Ask a question")
+    st.header("2. Ask a question")
 
     # ADD DEBUG BUTTON
     # col1, col2 = st.columns([3, 1])
@@ -188,11 +193,14 @@ def question_input_output_ui(qa_chains: QAchains) -> tuple[str, str | None]:
     #         st.rerun()
 
     # with col1:
-    question = st.text_input(
+    question = st.text_area(
         "Enter your question related to the uploaded documents:",
-        value="""What are the expectations for the Federal Reserve's interest rate cuts 
-according to David Sekera, and how do these expectations relate to the 
+        value="""What are the expectations for the Federal Reserve's interest rate cuts \
+according to David Sekera, and how do these expectations relate to the \
 upcoming Fed meetings and inflation data?""",
+        height=80,  # Initial height (can be adjusted)
+        # max_chars=1000,  # Optional: limit character count
+        help="You can expand this field by dragging the bottom-right corner",
     )
 
     answer = None
@@ -200,10 +208,36 @@ upcoming Fed meetings and inflation data?""",
         if question.strip():
             logger.info("Question submitted: %s", question)
             answer = process_question(question, qa_chains)
+
+            # Display selected documents after processing
+            # if hasattr(qa_chains, 'selected_documents') and qa_chains.selected_documents:
+            # display_selected_documents(qa_chains.selected_documents, qa_chains.drs_scores)
+
         else:
             st.error("Please enter a question.")
             logger.warning("Empty question submitted.")
     return question.strip(), answer
+
+
+def display_selected_documents(
+    selected_documents: list[str], drs_scores: dict[str, float]
+) -> None:
+    """
+    Display the selected documents with DRS scores in a simple expandable list.
+
+    Args:
+        selected_documents: List of selected document names
+        drs_scores: Dictionary of document names and their normalized DRS scores
+    """
+    if not selected_documents:
+        return
+
+    with st.expander(
+        f"📄 Selected Documents ({len(selected_documents)})", expanded=False
+    ):
+        for i, doc_name in enumerate(selected_documents, 1):
+            score = drs_scores.get(doc_name, 0.0)
+            st.write(f"{i}. {doc_name} - DRS: {score:.3f}")
 
 
 # ===============================
@@ -251,6 +285,10 @@ def process_question(question: str, qa_chains: QAchains) -> str | None:
         with st.spinner("Searching for relevant documents..."):
             qa_chains.retrieve_context()
             logger.info("========= Context retrieved successfully.")
+
+            # # Display selected documents after retrieval
+            # if hasattr(qa_chains, 'selected_documents') and qa_chains.selected_documents:
+            #     display_selected_documents(qa_chains.selected_documents, qa_chains.drs_scores)
 
         with st.spinner("Generating answer..."):
             answer = qa_chains.generate_answer()
@@ -334,10 +372,10 @@ def display_results_ui(
             st.subheader("📚 Q&A History")
             # Use an expander to make it collapsible if the history gets long
             with st.expander("View History", expanded=True):
-                for idx, (q, a) in enumerate(qa_history, 1):
+                for idx, (q, a, model) in enumerate(qa_history, 1):
+                    st.markdown(f"**Model:** `{model}`")
                     st.markdown(f"**Q{idx}:** {q}")
                     st.markdown(f"**A{idx}:** {a}")
-                    # st.markdown(f"**A{idx}:** {a[:100]}{'...' if len(a) > 100 else ''}")  # Truncate long answers
                     st.markdown("---")
             logger.info("Displayed Q&A history.")
 
@@ -345,6 +383,78 @@ def display_results_ui(
 # ===============================
 # Model Selection
 # ===============================
+def get_deployment_mode() -> str:
+    """Get deployment mode from environment or Streamlit secrets."""
+    # Try Streamlit secrets first (for cloud deployment)
+    try:
+        if hasattr(st, "secrets") and "DEPLOYMENT_MODE" in st.secrets:
+            return st.secrets["DEPLOYMENT_MODE"]
+    except (AttributeError, KeyError):
+        pass
+
+    # Fallback to environment variable (for local development)
+    return os.getenv("DEPLOYMENT_MODE", "local")
+
+
+def load_model_configs(config: OmegaConf) -> Dict[str, List[Dict]]:
+    """Load available models based on deployment mode."""
+    deployment_mode = get_deployment_mode()
+
+    if deployment_mode == "local":
+        return {
+            "[Paid] OpenAI Models": config.models.local.openai,
+            "[Free] Local Models": config.models.local.local_llama,
+        }
+    else:  # cloud
+        return {
+            "[Paid] OpenAI Models": config.models.cloud.openai,
+            "[Free] Groq Models": config.models.cloud.groq,
+        }
+
+
+def check_api_key_availability(model_config: Dict[str, Any]) -> Tuple[bool, str]:
+    """
+    Check if required API key is available for the selected model.
+
+    Args:
+        model_config: Model configuration dictionary
+
+    Returns:
+        Tuple of (is_available, message)
+    """
+    provider = model_config.get("provider")
+    requires_key = model_config.get("requires_key", False)
+
+    if not requires_key:
+        return True, "No API key required"
+
+    if provider == "openai":
+        # For OpenAI, we'll handle key input in the UI
+        return True, "OpenAI key will be requested"
+
+    elif provider == "groq":
+        # Check if Groq key is available in secrets or environment
+        groq_key = ""
+
+        # Try Streamlit secrets first (for cloud deployment)
+        try:
+            if hasattr(st, "secrets") and "GROQ_API_KEY" in st.secrets:
+                groq_key = st.secrets["GROQ_API_KEY"]
+        except (AttributeError, KeyError):
+            pass
+
+        # Fall back to environment variable
+        if not groq_key:
+            groq_key = os.getenv("GROQ_API_KEY", "")
+
+        if groq_key and groq_key != "your-groq-api-key-here":
+            return True, "Groq API key loaded from secrets"
+        else:
+            return False, "Groq API key not found in environment variables or secrets"
+
+    return False, f"Unknown provider: {provider}"
+
+
 def get_openai_key():
     """
     1. Reads OPENAI_API_KEY from .env in the repo root (without setting os.environ).
@@ -352,26 +462,112 @@ def get_openai_key():
     3. Returns the key (may be empty if the user hasn’t typed it yet).
     """
 
-    api_key = os.getenv("OPENAI_API_KEY", "dummy").strip()
+    # Check environment first
+    openai_key = os.getenv("OPENAI_API_KEY", "dummy").strip()
 
     # if it’s not set or is literally "dummy", ask the user
-    if not api_key or api_key.lower() == "dummy":
-        st.sidebar.header("OpenAI API Key")
+    if not openai_key or openai_key.lower() == "dummy":
+        st.sidebar.header("🔑 OpenAI API Key Required")
         api_key = st.sidebar.text_input(
             "Enter your OpenAI API Key.",
             type="password",
             help="This key will be stored in your environment—just for this session.",
         ).strip()
 
-    return api_key
+        if not api_key:
+            st.sidebar.warning("⚠️ Please enter your OpenAI API key to continue.")
+            return None
+
+        return api_key
+
+    return openai_key
 
 
-def select_model_ui():
-    st.header("1. Select LLM Model")
-    model_choice = st.selectbox(
-        "Select LLM Backend", ["Local LLaMA", "OpenAI (GPT-4o-mini)"]
-    )
-    return model_choice
+def select_model_ui(config: OmegaConf) -> Optional[Dict[str, Any]]:
+    """
+    Display model selection UI with deployment-aware options and API key management.
+
+    Args:
+        config: Configuration object containing model definitions
+
+    Returns:
+        Dict containing selected model configuration or None if not ready
+    """
+    with st.sidebar:
+        st.header("🤖 Model Selection")
+
+        # Show deployment mode
+        deployment_mode = get_deployment_mode()
+        deployment_emoji = "🏠" if deployment_mode == "local" else "☁️"
+        st.info(f"{deployment_emoji} **Deployment Mode:** {deployment_mode.title()}")
+
+        # Load available models
+        model_configs = load_model_configs(config)
+
+        # Create flat list of models with category info
+        model_options = ["Select a model..."]  # Add default option
+        model_lookup = {}
+
+        for category, models in model_configs.items():
+            for model in models:
+                display_name = f"{category} → {model['name']}"
+                model_options.append(display_name)
+                model_lookup[display_name] = {**model, "category": category}
+
+        # Model selection dropdown
+        selected_display_name = st.selectbox(
+            "Choose your model:",
+            options=model_options,
+            index=0,  # Default to first option ("Select a model...")
+            help="Select the model you want to use for question answering.",
+            key="model_selector",  # Add unique key
+        )
+
+        # Return None if default option is selected
+        if not selected_display_name or selected_display_name == "Select a model...":
+            st.info("👆 Please select a model to continue")
+            return None
+
+        selected_model = model_lookup[selected_display_name]
+
+        # Display model info
+        with st.expander("ℹ️ Model Information", expanded=False):
+            st.write(f"**Name:** {selected_model['name']}")
+            st.write(f"**Provider:** {selected_model['provider'].title()}")
+            st.write(f"**Model ID:** {selected_model['model_id']}")
+            st.write(
+                f"**Requires API Key:** {'Yes' if selected_model['requires_key'] else 'No'}"
+            )
+
+        # Check API key availability
+        key_available, key_message = check_api_key_availability(selected_model)
+
+        if not key_available:
+            st.error(f"❌ **API Key Missing:** {key_message}")
+            st.info(
+                "💡 Please add the required API key to your environment variables and restart the app."
+            )
+            st.stop()
+
+        # Handle API key input for OpenAI models
+        api_key = None
+        if selected_model["provider"] == "openai" and selected_model["requires_key"]:
+            api_key = get_openai_key()
+            if not api_key:
+                st.stop()
+
+        # Store API key in model config
+        if api_key:
+            selected_model["api_key"] = api_key
+
+        # Success message
+        provider_emoji = {"openai": "🤖", "groq": "⚡", "llama_cpp": "🦙"}.get(
+            selected_model["provider"], "🔧"
+        )
+
+        st.success(f"{provider_emoji} **Selected:** {selected_model['name']}")
+
+        return selected_model
 
 
 # def display_loading_local_model():

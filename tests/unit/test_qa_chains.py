@@ -4,8 +4,15 @@ def test_shorten_question_unit(config, monkeypatch):
     # Mock the entire Retrievers dependency
     mock_retrievers = type("MockRetrievers", (), {})()
     
-    # Create QAchains instance
-    qach = QAchains(mock_retrievers, config)
+    # Create a mock LLMManager to avoid initialization issues
+    class MockLLMManager:
+        def invoke(self, prompt, invoke_kwargs, **kwargs):
+            return "mocked shortened question"
+    
+    mock_llm_manager = MockLLMManager()
+    
+    # Create QAchains instance with mock LLM manager
+    qach = QAchains(mock_retrievers, config, mock_llm_manager)
     
     # Mock the LangChain components to avoid any external dependencies
     mock_chain = type("MockChain", (), {
