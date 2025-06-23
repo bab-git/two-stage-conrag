@@ -65,7 +65,7 @@ class PDFManager:
 
     def _get_in_memory_mode(self) -> bool:
         """Get in-memory mode from environment variables."""
-        return os.getenv("IN_MEMORY", "false").lower() == "true"
+        return bool(os.getenv("IN_MEMORY", "false"))
 
     def load_pdfs(self) -> None:
         """

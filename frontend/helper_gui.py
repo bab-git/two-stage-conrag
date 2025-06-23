@@ -6,7 +6,7 @@ from typing import Dict, List, Any, Tuple, Optional
 
 # logging configured in backend/settings.py
 import logging
-# from backend.my_lib.qa_chains import QAchains
+from backend.my_lib.qa_chains import QAchains
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 from dotenv import load_dotenv, find_dotenv
 
@@ -405,12 +405,12 @@ def get_in_memory_mode() -> bool:
     # Try Streamlit secrets first (for cloud deployment)
     try:
         if hasattr(st, "secrets") and "IN_MEMORY" in st.secrets:
-            return st.secrets["IN_MEMORY"].lower() == "true"
+            return bool(st.secrets["IN_MEMORY"])
     except (AttributeError, KeyError):
         pass
 
     # Fallback to environment variable (for local development)
-    return os.getenv("IN_MEMORY", "false").lower() == "true"
+    return bool(os.getenv("IN_MEMORY", "false"))
 
 
 def load_model_configs(config: OmegaConf) -> Dict[str, List[Dict]]:
