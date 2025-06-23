@@ -1,4 +1,5 @@
 import sys
+import logging
 
 try:
     # if pysqlite3 exists (i.e. you have installed it), load and swap it in
@@ -41,6 +42,7 @@ from backend.settings import load_and_validate_env_secrets
 #     get_deployment_mode,
 # )
 
+
 # ===============================
 # Model Selection
 # ===============================
@@ -71,7 +73,6 @@ def get_in_memory_mode() -> bool:
 
 
 # logging from backend
-import logging
 
 logger = logging.getLogger(__name__)
 

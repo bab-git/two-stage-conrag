@@ -5,7 +5,7 @@ try:
     __import__("pysqlite3")
     sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
     # Optionally log so you know it happened:
-    print("🔄 Overriding stdlib sqlite3 with pysqlite3")
+    # print("🔄 Overriding stdlib sqlite3 with pysqlite3")
 except ImportError:
     # no pysqlite3 installed → skip the swap (use system sqlite3)
     pass
