@@ -180,12 +180,12 @@ def main() -> None:
         f"{deployment_emoji} **Deployment Mode:** {deployment_mode.title()}"
     )
     st.sidebar.info(
-        f"""📊 **Storage Mode:** {get_in_memory_mode()}
-        {get_in_memory_mode() == True}
-        {get_in_memory_mode() == "true"}
-        {bool(get_in_memory_mode())==True}
-        """
-        # f"📊 **Storage Mode:** {'In-Memory' if get_in_memory_mode() else 'Persistent'}"
+        # f"""📊 **Storage Mode:** {get_in_memory_mode()}
+        # {get_in_memory_mode() == True}
+        # {get_in_memory_mode() == "true"}
+        # {bool(get_in_memory_mode())==True}
+        # """
+        f"📊 **Storage Mode:** {'In-Memory' if get_in_memory_mode() else 'Persistent'}"
     )
 
     # Initialize session state variables
