@@ -335,6 +335,10 @@ def display_results_ui(
         The function uses st.sidebar context manager to ensure all components
         are rendered in the sidebar rather than the main content area.
     """
+    if answer:
+        st.header("3. 💡 Answer")
+        st.write(answer)
+
     with st.sidebar:
         st.header("📋 Results")
 
@@ -394,6 +398,19 @@ def get_deployment_mode() -> str:
 
     # Fallback to environment variable (for local development)
     return os.getenv("DEPLOYMENT_MODE", "local")
+
+
+def get_in_memory_mode() -> bool:
+    """Get in-memory mode from environment or Streamlit secrets."""
+    # Try Streamlit secrets first (for cloud deployment)
+    try:
+        if hasattr(st, "secrets") and "IN_MEMORY" in st.secrets:
+            return st.secrets["IN_MEMORY"].lower() == "true"
+    except (AttributeError, KeyError):
+        pass
+
+    # Fallback to environment variable (for local development)
+    return os.getenv("IN_MEMORY", "false").lower() == "true"
 
 
 def load_model_configs(config: OmegaConf) -> Dict[str, List[Dict]]:
@@ -495,11 +512,6 @@ def select_model_ui(config: OmegaConf) -> Optional[Dict[str, Any]]:
     """
     with st.sidebar:
         st.header("🤖 Model Selection")
-
-        # Show deployment mode
-        deployment_mode = get_deployment_mode()
-        deployment_emoji = "🏠" if deployment_mode == "local" else "☁️"
-        st.info(f"{deployment_emoji} **Deployment Mode:** {deployment_mode.title()}")
 
         # Load available models
         model_configs = load_model_configs(config)

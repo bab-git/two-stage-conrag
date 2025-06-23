@@ -61,6 +61,11 @@ class PDFManager:
         self.vectorstore = None
         self.small_chunks = None
         self.large_chunks = None
+        self.in_memory_mode = self._get_in_memory_mode()
+
+    def _get_in_memory_mode(self) -> bool:
+        """Get in-memory mode from environment variables."""
+        return os.getenv("IN_MEMORY", "false").lower() == "true"
 
     def load_pdfs(self) -> None:
         """
@@ -194,19 +199,33 @@ class PDFManager:
         try:
             embedding = HuggingFaceEmbeddings(model_name=self.embed_model_id)
             # print(len(self.large_chunks))
-            chroma_client = chromadb.PersistentClient(path=self.persist_directory)
-            try:
-                chroma_client.delete_collection(self.collection_name)
-                logger.info(f"Collection {self.collection_name} is deleted")
-            except Exception:
-                logger.warning(f"Collection {self.collection_name} does not exist")
-            # print(len(chunks))
-            self.vectorstore = Chroma.from_documents(
-                documents=self.large_chunks,
-                embedding=embedding,
-                persist_directory=self.persist_directory,
-                collection_name=self.collection_name,
-            )
+
+            if self.in_memory_mode:
+                chroma_client = chromadb.EphemeralClient()
+            else:
+                chroma_client = chromadb.PersistentClient(path=self.persist_directory)
+                try:
+                    chroma_client.delete_collection(self.collection_name)
+                    logger.info(f"Collection {self.collection_name} is deleted")
+                except Exception:
+                    logger.warning(f"Collection {self.collection_name} does not exist")
+
+            # Chroma.from_documents call:
+            if self.in_memory_mode:
+                self.vectorstore = Chroma.from_documents(
+                    documents=self.large_chunks,
+                    embedding=embedding,
+                    collection_name=self.collection_name,
+                    client=chroma_client,
+                    # Don't include persist_directory for in-memory
+                )
+            else:
+                self.vectorstore = Chroma.from_documents(
+                    documents=self.large_chunks,
+                    embedding=embedding,
+                    persist_directory=self.persist_directory,
+                    collection_name=self.collection_name,
+                )
 
             collection = chroma_client.get_collection(name=self.collection_name)
             # st.success(f'Collection {collection_name} is created, number of itmes: {collection.count()}')

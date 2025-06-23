@@ -36,6 +36,8 @@ from helper_gui import (
     display_results_ui,
     pdf_uploader_ui,
     select_model_ui,
+    get_in_memory_mode,
+    get_deployment_mode,
 )
 
 # logging from backend
@@ -170,6 +172,15 @@ def main() -> None:
         "This application uses a two-stage retrieval-augmented generation (RAG) pipeline to efficiently extract information from PDF documents. "
         "It combines lexical retrieval (BM25) with semantic retrieval (vector embeddings) in two consecutive stages."
         "Upload your PDFs and ask questions to receive precise answers powered by either OpenAI's advanced models or free open-source models via Groq API (or llama-cpp-python in local deployment). "
+    )
+    # Show deployment mode
+    deployment_mode = get_deployment_mode()
+    deployment_emoji = "🏠" if deployment_mode == "local" else "☁️"
+    st.sidebar.info(
+        f"{deployment_emoji} **Deployment Mode:** {deployment_mode.title()}"
+    )
+    st.sidebar.info(
+        f"📊 **Storage Mode:** {'In-Memory' if get_in_memory_mode() else 'Persistent'}"
     )
 
     # Initialize session state variables
