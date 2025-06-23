@@ -244,6 +244,7 @@ def main() -> None:
         # Clear existing LLM manager and QA chains when model changes
         st.session_state.llm_manager = None
         st.session_state.qa_chains = None
+        st.session_state.answer = None
 
         if st.session_state.verbose:
             st.info(f"Model changed to: {selected_model['name']}")

@@ -10,7 +10,7 @@ enableXsrfProtection = false
 runOnSave = false
 
 # Memory and connection optimization
-maxUploadSize = 5
+maxUploadSize = 10
 maxMessageSize = 200
 headless = true
 

@@ -65,7 +65,7 @@ class PDFManager:
 
     def _get_in_memory_mode(self) -> bool:
         """Get in-memory mode from environment variables."""
-        return bool(os.getenv("IN_MEMORY", "false"))
+        return bool(os.getenv("IN_MEMORY", "false").lower() == "true")
 
     def load_pdfs(self) -> None:
         """
@@ -204,11 +204,11 @@ class PDFManager:
                 chroma_client = chromadb.EphemeralClient()
             else:
                 chroma_client = chromadb.PersistentClient(path=self.persist_directory)
-                try:
-                    chroma_client.delete_collection(self.collection_name)
-                    logger.info(f"Collection {self.collection_name} is deleted")
-                except Exception:
-                    logger.warning(f"Collection {self.collection_name} does not exist")
+            try:
+                chroma_client.delete_collection(self.collection_name)
+                logger.info(f"Collection {self.collection_name} is deleted")
+            except Exception:
+                logger.info(f"Collection {self.collection_name} does not exist.")
 
             # Chroma.from_documents call:
             if self.in_memory_mode:
