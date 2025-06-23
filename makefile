@@ -32,7 +32,7 @@ IMAGE_TAG  := latest
 
 # Launch the Streamlit UI inside Poetry's venv
 run:
-	poetry run streamlit run frontend/app.py --server.fileWatcherType none
+	poetry run streamlit run frontend/app.py
 
 
 # Create venv & install all dependencies (including dev)

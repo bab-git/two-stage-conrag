@@ -161,7 +161,7 @@ def main() -> None:
     st.title("Two-Stage RAG System for PDF Question Answering")
     # st.subheader("Fast yet Precise Document Retrieval and Question Answering")
     st.write(
-        "Start by **selecting a model** (OpenAI or local LLaMA), then **upload your PDF files**, and finally **ask questions** to extract insights using the two-stage retrieval system."
+        "Start by **selecting a model** (OpenAI or Open Models) from **left sidebar**, then **upload your PDF files**, and finally **ask questions** to extract insights using the two-stage retrieval system."
     )
 
     # sidebar
