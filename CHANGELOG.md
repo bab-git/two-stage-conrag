@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] Groq Models Support and UX Enhancements
+
+### Added
+- More Sample PDFs: Added more sample PDFs and functionality to show relevant chunks and documents.
+
+### Changed
+- **UX Improvements**: 
+  - Free LLMs are now ordered for better user experience.
+  - Model categories have been updated for improved navigation.
+  - Multi-model options and API key per model have been introduced.
+  - Model selection refactor: Sidebar choices have been improved.
+
+### Fixed
+- **SQLite**: 
+  - Replace `sqlite3` with `pysqlite3-binary` to overcome the limitation on streamlit cloud.
+
+### Testing
+- **LLM Manager**: Updated mock tests for LLM manager.
+
+### Miscellaneous
+- **Streamlit**: Now using Streamlit secrets for configuration.
+- **GROQ Models**: Updated GROQ models.
+- **Default Model**: Set default model to openai-4o-mini.
 
 ## [1.0.0] Local Models Support and Enhanced User Experience
 

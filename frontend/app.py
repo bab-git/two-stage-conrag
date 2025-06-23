@@ -167,9 +167,9 @@ def main() -> None:
     # sidebar
     st.sidebar.header("App Description")
     st.sidebar.write(
-        "This application leverages a two-stage retrieval-augmented generation (RAG) pipeline to efficiently process and extract information from PDF documents. "
-        "Users can upload a collection of PDFs and interactively ask questions to receive precise answers based on the document content. "
-        "The system supports both OpenAI and local LLaMA models, providing flexibility in model selection and deployment."
+        "This application uses a two-stage retrieval-augmented generation (RAG) pipeline to efficiently extract information from PDF documents. "
+        "It combines lexical retrieval (BM25) with semantic retrieval (vector embeddings) in two consecutive stages."
+        "Upload your PDFs and ask questions to receive precise answers powered by either OpenAI's advanced models or free open-source models via Groq API (or llama-cpp-python in local deployment). "
     )
 
     # Initialize session state variables
