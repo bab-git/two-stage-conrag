@@ -6,7 +6,7 @@ from typing import Dict, List, Any, Tuple, Optional
 
 # logging configured in backend/settings.py
 import logging
-from backend.my_lib.qa_chains import QAchains
+# from backend.my_lib.qa_chains import QAchains
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 from dotenv import load_dotenv, find_dotenv
 
