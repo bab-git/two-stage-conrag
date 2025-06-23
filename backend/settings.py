@@ -64,8 +64,8 @@ def is_streamlit_running() -> bool:
         return False
 
 
-# streamlit_running = is_streamlit_running()
-if is_streamlit_running():
-    logger.info("streamlit is not running")
-else:
-    logger.info("streamlit is running")
+# # streamlit_running = is_streamlit_running()
+# if is_streamlit_running():
+#     logger.info("streamlit is not running")
+# else:
+#     logger.info("streamlit is running")

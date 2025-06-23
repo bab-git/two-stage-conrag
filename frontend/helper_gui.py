@@ -30,7 +30,7 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
     """
     st.header("1. Upload PDF Documents")
     uploaded = st.file_uploader(
-        "Upload PDFs files or the folder containing PDFs",
+        "Upload PDF files. Loading time depends on total file size.",
         type="pdf",
         accept_multiple_files=True,
     )
