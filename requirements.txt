@@ -18,5 +18,5 @@ rank-bm25>=0.2.2
 sentence-transformers>=4.1.0
 streamlit>=1.46.0
 # Core ML (CPU-only versions)
-torch>=2.0.0,<3.0.0
+# torch>=2.0.0,<3.0.0
 scikit-learn>=1.7.0
