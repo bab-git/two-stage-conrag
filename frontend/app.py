@@ -147,14 +147,20 @@ def main() -> None:
         None
     """
 
-    logger.info("Starting Streamlit app")
+    # Initialize session state variables
+    initialize_session_state()
+    logger.debug("Session state initialized successfully.")
+
+    if st.session_state.debug:
+        logger.info("Starting Streamlit app")
 
     # Display the image at the top of the app
     st.image("frontend/static/image.jpeg", use_container_width=True)
 
     # Load configuration using OmegaConf
     config = OmegaConf.load("configs/config.yaml")
-    logger.info("Configuration loaded successfully.")
+    # if st.session_state.debug:
+    logger.debug("Configuration loaded successfully.")
     # print(config)
 
     # ==============================
@@ -188,10 +194,6 @@ def main() -> None:
         f"📊 **Storage Mode:** {'In-Memory' if get_in_memory_mode() else 'Persistent'}"
     )
 
-    # Initialize session state variables
-    initialize_session_state()
-    logger.info("Session state initialized successfully.")
-
     # Check verbose mode
     if config.settings.verbose:
         st.session_state.verbose = True
@@ -219,7 +221,8 @@ def main() -> None:
     if not st.session_state.get("env_validated"):
         load_and_validate_env_secrets()
         st.session_state.env_validated = True
-        logger.info("Environment secrets validated successfully.")
+        if st.session_state.debug:
+            logger.info("Environment secrets validated successfully.")
 
     # ==============================
     # Model Selection
@@ -284,6 +287,10 @@ def main() -> None:
         if st.session_state.debug:
             st.write("pdfs path:", pdf_path)
 
+        # CLEAR ANSWER WHEN PROCESSING NEW PDFs
+        st.session_state.answer = None
+
+        # Build vector store
         pdf_manager, retrievers = vector_store_builder(pdf_path, config, uploaded)
         st.session_state.pdf_manager = pdf_manager
         st.session_state.retrievers = retrievers
@@ -329,7 +336,7 @@ def main() -> None:
         answer=st.session_state.answer,
         qa_history=st.session_state.qa_history,
     )
-    logger.info("Displayed results and history.")
+    logger.debug("Displayed results and history.")
 
 
 if __name__ == "__main__":
