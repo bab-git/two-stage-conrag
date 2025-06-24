@@ -33,7 +33,7 @@ models:
         provider: "openai"
         requires_key: true
     groq:
-      - name: "LLaMA 4 Scout 17B (30K Context)"
+      - name: "LLaMA 4 Scout 17B"
         model_id: "meta-llama/llama-4-scout-17b-16e-instruct"
         provider: "groq"
         requires_key: false    
@@ -70,7 +70,7 @@ llm:
 
 Vectorstore:  
   collection_name: large_chunks
-  persist_directory : 'vector_store'
+  persist_directory : 'vector_store' # Only used when IN_MEMORY=false
   clear_existing: False # Feature flag: to clear the vector store before rebuilding it at each run
 
 Retrieval:

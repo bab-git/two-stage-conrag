@@ -5,7 +5,7 @@ try:
     __import__("pysqlite3")
     sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
     # Optionally log so you know it happened:
-    print("🔄 Overriding stdlib sqlite3 with pysqlite3")
+    # print("🔄 Overriding stdlib sqlite3 with pysqlite3")
 except ImportError:
     # no pysqlite3 installed → skip the swap (use system sqlite3)
     pass
@@ -36,6 +36,8 @@ from helper_gui import (
     display_results_ui,
     pdf_uploader_ui,
     select_model_ui,
+    get_in_memory_mode,
+    get_deployment_mode,
 )
 
 # logging from backend
@@ -145,14 +147,20 @@ def main() -> None:
         None
     """
 
-    logger.info("Starting Streamlit app")
+    # Initialize session state variables
+    initialize_session_state()
+    logger.debug("Session state initialized successfully.")
+
+    if st.session_state.debug:
+        logger.info("Starting Streamlit app")
 
     # Display the image at the top of the app
     st.image("frontend/static/image.jpeg", use_container_width=True)
 
     # Load configuration using OmegaConf
     config = OmegaConf.load("configs/config.yaml")
-    logger.info("Configuration loaded successfully.")
+    # if st.session_state.debug:
+    logger.debug("Configuration loaded successfully.")
     # print(config)
 
     # ==============================
@@ -161,7 +169,7 @@ def main() -> None:
     st.title("Two-Stage RAG System for PDF Question Answering")
     # st.subheader("Fast yet Precise Document Retrieval and Question Answering")
     st.write(
-        "Start by **selecting a model** (OpenAI or local LLaMA), then **upload your PDF files**, and finally **ask questions** to extract insights using the two-stage retrieval system."
+        "Start by **selecting a model** (OpenAI or Open Models) from **left sidebar**, then **upload your PDF files**, and finally **ask questions** to extract insights using the two-stage retrieval system."
     )
 
     # sidebar
@@ -171,10 +179,20 @@ def main() -> None:
         "It combines lexical retrieval (BM25) with semantic retrieval (vector embeddings) in two consecutive stages."
         "Upload your PDFs and ask questions to receive precise answers powered by either OpenAI's advanced models or free open-source models via Groq API (or llama-cpp-python in local deployment). "
     )
-
-    # Initialize session state variables
-    initialize_session_state()
-    logger.info("Session state initialized successfully.")
+    # Show deployment mode
+    deployment_mode = get_deployment_mode()
+    deployment_emoji = "🏠" if deployment_mode == "local" else "☁️"
+    st.sidebar.info(
+        f"{deployment_emoji} **Deployment Mode:** {deployment_mode.title()}"
+    )
+    st.sidebar.info(
+        # f"""📊 **Storage Mode:** {get_in_memory_mode()}
+        # {get_in_memory_mode() == True}
+        # {get_in_memory_mode() == "true"}
+        # {bool(get_in_memory_mode())==True}
+        # """
+        f"📊 **Storage Mode:** {'In-Memory' if get_in_memory_mode() else 'Persistent'}"
+    )
 
     # Check verbose mode
     if config.settings.verbose:
@@ -203,7 +221,8 @@ def main() -> None:
     if not st.session_state.get("env_validated"):
         load_and_validate_env_secrets()
         st.session_state.env_validated = True
-        logger.info("Environment secrets validated successfully.")
+        if st.session_state.debug:
+            logger.info("Environment secrets validated successfully.")
 
     # ==============================
     # Model Selection
@@ -228,6 +247,7 @@ def main() -> None:
         # Clear existing LLM manager and QA chains when model changes
         st.session_state.llm_manager = None
         st.session_state.qa_chains = None
+        st.session_state.answer = None
 
         if st.session_state.verbose:
             st.info(f"Model changed to: {selected_model['name']}")
@@ -267,6 +287,10 @@ def main() -> None:
         if st.session_state.debug:
             st.write("pdfs path:", pdf_path)
 
+        # CLEAR ANSWER WHEN PROCESSING NEW PDFs
+        st.session_state.answer = None
+
+        # Build vector store
         pdf_manager, retrievers = vector_store_builder(pdf_path, config, uploaded)
         st.session_state.pdf_manager = pdf_manager
         st.session_state.retrievers = retrievers
@@ -312,7 +336,7 @@ def main() -> None:
         answer=st.session_state.answer,
         qa_history=st.session_state.qa_history,
     )
-    logger.info("Displayed results and history.")
+    logger.debug("Displayed results and history.")
 
 
 if __name__ == "__main__":

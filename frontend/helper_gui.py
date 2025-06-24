@@ -30,10 +30,13 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
     """
     st.header("1. Upload PDF Documents")
     uploaded = st.file_uploader(
-        "Upload PDFs files or the folder containing PDFs",
+        "Upload PDFs files or the folder containing PDFs documents.",
         type="pdf",
         accept_multiple_files=True,
+        help="⚠️ Processing time increases with file size.",
     )
+    # Add prominent warning below the uploader
+    st.warning("⚠️ **Loading time depends on total file size**")
     # Create two columns for the buttons
     col1, col2, col3 = st.columns([1, 0.31, 1])  # Adjust ratios for spacing
 
@@ -108,8 +111,10 @@ def save_uploaded_pdfs(
     If clear_existing is True, wipes the folder first.
     Returns the path to dest_folder once files are saved.
     """
-    if clear_existing:
-        shutil.rmtree(dest_folder, ignore_errors=True)
+    # if clear_existing:
+    if st.session_state.debug:
+        st.info(f"uploaded_files: {uploaded_files}")
+    shutil.rmtree(dest_folder, ignore_errors=True)
     os.makedirs(dest_folder, exist_ok=True)
 
     for f in uploaded_files:
@@ -335,6 +340,10 @@ def display_results_ui(
         The function uses st.sidebar context manager to ensure all components
         are rendered in the sidebar rather than the main content area.
     """
+    if answer:
+        st.header("3. 💡 Answer")
+        st.write(answer)
+
     with st.sidebar:
         st.header("📋 Results")
 
@@ -372,7 +381,7 @@ def display_results_ui(
             st.subheader("📚 Q&A History")
             # Use an expander to make it collapsible if the history gets long
             with st.expander("View History", expanded=True):
-                for idx, (q, a, model) in enumerate(qa_history, 1):
+                for idx, (q, a, model) in enumerate(reversed(qa_history), 1):
                     st.markdown(f"**Model:** `{model}`")
                     st.markdown(f"**Q{idx}:** {q}")
                     st.markdown(f"**A{idx}:** {a}")
@@ -394,6 +403,19 @@ def get_deployment_mode() -> str:
 
     # Fallback to environment variable (for local development)
     return os.getenv("DEPLOYMENT_MODE", "local")
+
+
+def get_in_memory_mode() -> bool:
+    """Get in-memory mode from environment or Streamlit secrets."""
+    # Try Streamlit secrets first (for cloud deployment)
+    try:
+        if hasattr(st, "secrets") and "IN_MEMORY" in st.secrets:
+            return st.secrets["IN_MEMORY"].lower() == "true"
+    except (AttributeError, KeyError):
+        pass
+
+    # Fallback to environment variable (for local development)
+    return os.getenv("IN_MEMORY", "false").lower() == "true"
 
 
 def load_model_configs(config: OmegaConf) -> Dict[str, List[Dict]]:
@@ -495,11 +517,6 @@ def select_model_ui(config: OmegaConf) -> Optional[Dict[str, Any]]:
     """
     with st.sidebar:
         st.header("🤖 Model Selection")
-
-        # Show deployment mode
-        deployment_mode = get_deployment_mode()
-        deployment_emoji = "🏠" if deployment_mode == "local" else "☁️"
-        st.info(f"{deployment_emoji} **Deployment Mode:** {deployment_mode.title()}")
 
         # Load available models
         model_configs = load_model_configs(config)
