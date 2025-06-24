@@ -24,7 +24,9 @@ logger = logging.getLogger(__name__)
 load_dotenv(find_dotenv(), override=True)
 
 
+# ====================================
 # Load and validate environment secrets
+# ====================================
 def load_and_validate_env_secrets():
     """
     Validates that all required environment variables are present and properly formatted.
@@ -49,7 +51,9 @@ def load_and_validate_env_secrets():
         logger.info(f"LangSmith key loaded (ends with {lang_key[-10:]})")
 
 
-# Find if streamlit is running
+# ====================================
+# Check if code is running within Streamlit
+# ====================================
 def is_streamlit_running() -> bool:
     """
     Checks if the script is running within a Streamlit app.
@@ -62,10 +66,3 @@ def is_streamlit_running() -> bool:
     except Exception as e:
         logger.error(f"Error checking if Streamlit is running: {e}")
         return False
-
-
-# # streamlit_running = is_streamlit_running()
-# if is_streamlit_running():
-#     logger.info("streamlit is not running")
-# else:
-#     logger.info("streamlit is running")

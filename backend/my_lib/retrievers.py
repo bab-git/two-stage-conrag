@@ -31,6 +31,9 @@ class Retrievers:
     efficient and accurate document retrieval for question answering tasks.
     """
 
+    # ====================================
+    # Initialize retrievers with PDF manager and configuration
+    # ====================================
     def __init__(self, pdf_manager: PDFManager, config: OmegaConf):
         """
         Initialize the retriever with the vectorstore and small chunks of documents
@@ -51,6 +54,9 @@ class Retrievers:
         self.verbose = config.settings.verbose
         self.retriever_small = None
 
+    # ====================================
+    # Set up BM25 and cross-encoder retrievers
+    # ====================================
     def setup_retrievers(self) -> None:
         """
         Sets up the retrievers.
@@ -80,6 +86,9 @@ class Retrievers:
             else:
                 logger.error(f"Failed to create retrievers: {e}")
 
+    # ====================================
+    # Retrieve small chunks using BM25 keyword search
+    # ====================================
     def retrieve_small_chunks(self, shortened_question: str) -> list[Document]:
         """
         Retrieves relevant small chunks based on the shortened question
@@ -132,6 +141,9 @@ class Retrievers:
                 logger.error(f"Failed to retrieve small chunks: {e}")
             return None
 
+    # ====================================
+    # Calculate Document Retrieval Score (DRS) for documents
+    # ====================================
     def calculate_drs(
         self, small_chunks_retrieved: list[Document]
     ) -> tuple[list[str], dict[str, float]]:
@@ -219,6 +231,9 @@ class Retrievers:
                 logger.error(f"Failed to calculate DRS for PDF documents: {e}")
             return None
 
+    # ====================================
+    # Aggregate similarity scores with DRS weights
+    # ====================================
     def score_aggregate(
         self, retrieved_chunks: list[Document], normalized_drs: dict[str, float]
     ) -> list[Document]:
@@ -260,6 +275,9 @@ class Retrievers:
                 )
             return None
 
+    # ====================================
+    # Retrieve large chunks using semantic search
+    # ====================================
     def retrieve_large_chunks(self, question: str, files: list[str]) -> list[Document]:
         """
         Retrieve relevant large chunks from the vector store based on the given question and the filtered file names.

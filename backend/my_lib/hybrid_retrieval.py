@@ -8,8 +8,31 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# Hybrid retrieval class
+# ====================================
+# Hybrid retrieval class for advanced document fusion
+# ====================================
 class Hybrid_Retrieval:
+    """
+    A class that implements hybrid retrieval combining BM25 keyword search and semantic search.
+
+    This class provides advanced document retrieval capabilities by fusing results from
+    multiple search strategies using Reciprocal Rank Fusion (RRF). It supports both
+    hybrid and semantic-only retrieval modes for flexible document search.
+
+    Attributes:
+        pdf_manager (PDFManager): PDF document manager instance
+        chunks (list): Large document chunks for retrieval
+        vectorstore: Vector store for semantic search
+        CE_model_keywords: Cross-encoder model for keyword search scoring
+        CE_model_semantic: Cross-encoder model for semantic search scoring
+        verbose (bool): Enable verbose logging
+        modelID (str): OpenAI model identifier
+        top_score_docs (list): Final ranked documents after fusion
+    """
+
+    # ====================================
+    # Initialize hybrid retrieval system
+    # ====================================
     def __init__(self, pdf_manager: PDFManager, retrievers: Retrievers, config):
         self.pdf_manager = pdf_manager
         self.chunks = pdf_manager.large_chunks
@@ -20,9 +43,29 @@ class Hybrid_Retrieval:
         self.modelID = config.llm.openai_modelID
         self.top_score_docs = None
 
+    # ====================================
+    # Perform hybrid retrieval with BM25 and semantic search fusion
+    # ====================================
     def hybrid_retriever(
         self, question, top_k_BM25, top_k_semantic, top_k_final, rrf_k=60, hybrid=True
     ):
+        """
+        Perform hybrid document retrieval using BM25 and semantic search with RRF fusion.
+
+        This method combines keyword-based BM25 retrieval with semantic vector search,
+        then applies Reciprocal Rank Fusion (RRF) to merge and rank the results.
+
+        Args:
+            question (str): User query for document retrieval
+            top_k_BM25 (int): Number of documents to retrieve via BM25
+            top_k_semantic (int): Number of documents to retrieve via semantic search
+            top_k_final (int): Final number of documents to return
+            rrf_k (int, optional): RRF parameter for rank fusion. Defaults to 60.
+            hybrid (bool, optional): Use hybrid mode (True) or semantic-only (False). Defaults to True.
+
+        Returns:
+            list[Document]: Top-ranked documents after fusion, limited to top_k_final
+        """
         chunks = self.chunks
 
         if hybrid:

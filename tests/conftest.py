@@ -4,6 +4,11 @@ import shutil
 import pytest
 from omegaconf import OmegaConf
 
+"""Pytest configuration and shared fixtures for the test suite."""
+
+# ====================================
+# Create temporary PDF directory fixture
+# ====================================
 @pytest.fixture
 def tmp_pdf_dir(tmp_path):
     """
@@ -14,6 +19,9 @@ def tmp_pdf_dir(tmp_path):
     (d / "empty.pdf").write_bytes(b"%%EOF")
     return str(d)
 
+# ====================================
+# Create minimal configuration fixture
+# ====================================
 @pytest.fixture
 def config(tmp_path):
     """

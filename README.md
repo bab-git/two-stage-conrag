@@ -1,10 +1,15 @@
 # Two-Stage Consecutive RAG System for Document QA: Enhancing Precision and Scalability
-
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
 ![LangChain](https://img.shields.io/badge/Library-LangChain-orange)
 ![Streamlit](https://img.shields.io/badge/UI-Streamlit-green)
 ![Poetry](https://img.shields.io/badge/Dependency-Poetry-blueviolet)
 ![Docker](https://img.shields.io/badge/Containerized-Docker-blue)
+![Testing](https://img.shields.io/badge/Testing-Pytest-blue)
+![Linting](https://img.shields.io/badge/Code%20Quality-Ruff-yellow)
+![CI](https://img.shields.io/badge/CI-GitHub%20Actions-green)
+![Groq](https://img.shields.io/badge/LLM-Groq-purple)
+![OpenAI](https://img.shields.io/badge/LLM-OpenAI-green)
+![LlamaCpp](https://img.shields.io/badge/LLM-LlamaCpp-orange)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 
@@ -54,25 +59,28 @@ two-stage-conrag/
 ├── backend/                  # Core logic: PDF manager, retrievers, QA chains, settings
 │   ├── my_lib/              # Modular pipeline components
 │   ├── settings.py
-│   ├── tools.py
 │   ├── utils.py
-│   └── requirements.txt     # Optional backend pip-only fallback
+│   └── README.md
 ├── frontend/                # Streamlit interface
 │   ├── app.py
-│   ├── helper_gui.py
-│   └── requirements.txt     # Optional frontend pip-only fallback
+│   |── helper_gui.py
+│   └── static/              # Static assets
 ├── vector_store/            # Embedding DB client and index config
 ├── configs/                 # YAML configuration files
 │   └── config.yaml
 ├── data/                    # Sample and full-scale PDF sets
-│   └── sample_pdfs/
+│   ├── sample_pdfs/
+│   └── uploads/             # Temporary uploaded files
 ├── notebooks/               # Prototyping and experimentation
 ├── .env_example             # Template for secrets and API keys
 ├── Dockerfile               # Production-ready Dockerfile (Poetry-free runtime)
 ├── Makefile                 # CLI shortcuts for dev/test/deploy
-├── requirements.txt         # Auto-generated fallback for pip
+├── requirements.txt         # streamlit deployment requirements
+├── requirements-local.txt   # local implementation requirements
+├── requirements-fallback.txt # fallback for environments without Poetry
 ├── pyproject.toml           # Poetry project definition
 ├── poetry.lock              # Locked dependencies
+├── pytest.ini               # Test configuration
 └── README.md                # Project overview and instructions
 ```
 
@@ -108,7 +116,10 @@ Then edit `.env` and add:
 
 ```env
 OPENAI_API_KEY=your-key-here
-# Optional: LANGCHAIN_API_KEY=your-langsmith-key
+(Optional) LANGCHAIN_API_KEY=your-langsmith-key
+DEPLOYMENT_MODE=local  # or 'cloud'
+DEBUG_MODE=false
+IN_MEMORY=true  # true for in-memory vector store, false for persistent
 ```
 
 ### 4. Install Dependencies (Choose One)
@@ -125,7 +136,10 @@ OPENAI_API_KEY=your-key-here
 Once Poetry is available:
 
 ```bash
-make install  # Equivalent to: poetry install
+make install          # Production dependencies
+make install-dev       # Development dependencies
+make install-cloud     # Cloud deployment setup
+
 ```
 
 This installs dependencies into an isolated virtual environment based on `pyproject.toml`.
@@ -182,7 +196,6 @@ This method skips Poetry and uses pip internally with a pinned `requirements.txt
 Once your environment is ready:
 
 ```bash
-source .venv/bin/activate  # Activate the environment manually
 make run                   # Launch the Streamlit app
 ```
 
@@ -201,7 +214,8 @@ Then visit [http://localhost:8501](http://localhost:8501) in your browser to use
 2. **Ask Questions**: Once the PDFs are processed, type your question in the question box. The system will return an answer based on the ingested content.
 
 ### Sample and Full-Scale PDF Datasets
-The repository includes a sample PDF dataset located in the `data/sample_pdfs/` folder. This dataset contains 5 PDF files that can be used for a quick test of the system without any additional setup.
+The repository includes a sample PDF dataset located in the `data/sample_pdfs/` 
+folder. This dataset contains **15 PDF files** that can be used for testing.
 
 **Note:** These sample PDF files are sourced from [Morningstar](https://www.morningstar.com/) website, containing market predictions and reviews. They are included solely for demonstration and testing purposes.
 

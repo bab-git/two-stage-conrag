@@ -31,6 +31,9 @@ class PDFManager:
     document search operations.
     """
 
+    # ====================================
+    # Initialize PDF manager with configuration
+    # ====================================
     def __init__(self, pdf_path: str, config: OmegaConf):
         """
         Initializes the PDFManager with the necessary configurations.
@@ -63,10 +66,16 @@ class PDFManager:
         self.large_chunks = None
         self.in_memory_mode = self._get_in_memory_mode()
 
+    # ====================================
+    # Get in-memory storage mode from environment variables
+    # ====================================
     def _get_in_memory_mode(self) -> bool:
         """Get in-memory mode from environment variables."""
         return bool(os.getenv("IN_MEMORY", "false").lower() == "true")
 
+    # ====================================
+    # Load PDF files from specified directory
+    # ====================================
     def load_pdfs(self) -> None:
         """
         Loads all PDF files from the specified directory using LangChain's PyPDFLoader.
@@ -121,6 +130,9 @@ class PDFManager:
                 logger.error(f"Failed to load PDF files: {e}")
             return
 
+    # ====================================
+    # Split documents into small and large chunks
+    # ====================================
     def chunk_documents(self) -> None:
         """
         Splits loaded documents into small and large chunks using LangChain's RecursiveCharacterTextSplitter.
@@ -175,6 +187,9 @@ class PDFManager:
             else:
                 logger.error(f"Failed to split documents: {e}")
 
+    # ====================================
+    # Create vector store from document chunks
+    # ====================================
     def create_vectorstore(self) -> None:
         """
         Creates a vector store from the loaded document chunks using Chroma and HuggingFace embeddings.

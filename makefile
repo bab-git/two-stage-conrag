@@ -7,6 +7,7 @@ help:
 	@echo "Available targets:"
 	@echo "  install         Set up virtual environment and install requirements"
 	@echo "  install-dev     Set up virtual environment and install development requirements"
+	@echo "  install-cloud   Set up virtual environment and install cloud deployment requirements"
 	@echo ""
 	@echo "  export-local    Export requirements-local.txt (with llama-cpp-python)"
 	@echo "  export-cloud    Export requirements.txt (without llama-cpp-python)"

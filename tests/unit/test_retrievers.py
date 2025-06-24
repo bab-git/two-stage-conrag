@@ -1,13 +1,25 @@
+"""Unit tests for Retrievers class functionality."""
+
 import pytest
 from backend.my_lib.retrievers import Retrievers
 from backend.my_lib.pdf_manager import PDFManager
 from langchain_core.documents import Document
 
+# ====================================
+# Mock vector store for testing
+# ====================================
 class DummyVS:
+    """Mock vector store class for testing."""
+    
     def similarity_search(self, query, k, filter):
+        """Mock similarity search method."""
         return []
 
+# ====================================
+# Test retriever setup and small chunk retrieval
+# ====================================
 def test_setup_and_retrieve_small(config, tmp_pdf_dir, monkeypatch):
+    """Test retriever setup and small chunk retrieval with mocked dependencies."""
     # prepare PDFManager with proper Document objects
     mgr = PDFManager(tmp_pdf_dir, config)
     # Create proper Document objects instead of dummy objects
@@ -42,7 +54,11 @@ def test_setup_and_retrieve_small(config, tmp_pdf_dir, monkeypatch):
     assert hasattr(chunks[0].metadata, "__getitem__")
     assert "score" in chunks[0].metadata
 
+# ====================================
+# Test large chunk retrieval functionality
+# ====================================
 def test_retrieve_large(config, tmp_pdf_dir):
+    """Test large chunk retrieval with dummy vector store."""
     mgr = PDFManager(tmp_pdf_dir, config)
     retr = Retrievers(mgr, config)
     # inject dummy vectorstore
