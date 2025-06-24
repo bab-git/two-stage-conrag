@@ -98,9 +98,9 @@ def pdf_uploader_ui() -> tuple[list[UploadedFile] | None, str | None]:
     return None, None
 
 
-# ===============================
-# Save uploaded PDFs
-# ===============================
+# ====================================
+# Save uploaded PDF files to local directory
+# ====================================
 def save_uploaded_pdfs(
     uploaded_files: list[UploadedFile], dest_folder: str, clear_existing: bool = True
 ) -> str:
@@ -123,41 +123,6 @@ def save_uploaded_pdfs(
             out.write(f.getbuffer())
     logger.info("Saved %d PDFs to %s", len(uploaded_files), dest_folder)
     return dest_folder
-
-
-# def pdf_uploader_ui() -> str | None:
-#     """
-#     Display the PDF uploader UI block with input field and submit button.
-
-#     This function renders a text input for users to enter a directory path containing
-#     PDF files and a submit button to validate the path. It checks if the provided
-#     path is a valid directory and displays appropriate error messages if not.
-
-#     Returns:
-#         str or None: The valid directory path if the submit button is clicked and
-#                     the path is valid, otherwise None.
-
-#     Side Effects:
-#         - Displays Streamlit UI components (header, text_input, button)
-#         - Shows error messages via st.error() for invalid paths
-#     """
-#     st.header("1. Upload PDF Documents")
-#     pdf_path = st.text_input(
-#         "Enter the path to the folder containing your PDF files:",
-#         value="data/sample_pdfs/",
-#     )
-
-#     # Read from a local folder
-#     if st.button("Submit PDFs"):
-#         if pdf_path and os.path.isdir(pdf_path):
-#             logger.info("PDF path submitted: %s", pdf_path)
-#             return pdf_path
-#         else:
-#             st.error(
-#                 "Cannot find PDF files in the directory. Please select a directory with PDF files."
-#             )
-#             logger.warning("Invalid PDF path submitted: %s", pdf_path)
-#     return None
 
 
 # ===============================
@@ -224,6 +189,9 @@ upcoming Fed meetings and inflation data?""",
     return question.strip(), answer
 
 
+# ====================================
+# Display selected documents with DRS scores
+# ====================================
 def display_selected_documents(
     selected_documents: list[str], drs_scores: dict[str, float]
 ) -> None:
@@ -245,9 +213,9 @@ def display_selected_documents(
             st.write(f"{i}. {doc_name} - DRS: {score:.3f}")
 
 
-# ===============================
-# Process question
-# ===============================
+# ====================================
+# Process user question through QA pipeline
+# ====================================
 def process_question(question: str, qa_chains: QAchains) -> str | None:
     """
     Process a user question through the complete QA pipeline.
@@ -291,10 +259,6 @@ def process_question(question: str, qa_chains: QAchains) -> str | None:
             qa_chains.retrieve_context()
             logger.info("========= Context retrieved successfully.")
 
-            # # Display selected documents after retrieval
-            # if hasattr(qa_chains, 'selected_documents') and qa_chains.selected_documents:
-            #     display_selected_documents(qa_chains.selected_documents, qa_chains.drs_scores)
-
         with st.spinner("Generating answer..."):
             answer = qa_chains.generate_answer()
             logger.info("========= Answer generated successfully.")
@@ -310,9 +274,9 @@ def process_question(question: str, qa_chains: QAchains) -> str | None:
     return answer
 
 
-# ===============================
-# Display results
-# ===============================
+# ====================================
+# Display QA results and history in UI
+# ====================================
 def display_results_ui(
     answer: str | None, qa_history: list[tuple[str, str]] | None
 ) -> None:
@@ -389,11 +353,16 @@ def display_results_ui(
             logger.info("Displayed Q&A history.")
 
 
-# ===============================
-# Model Selection
-# ===============================
+# ====================================
+# Get deployment mode from environment
+# ====================================
 def get_deployment_mode() -> str:
-    """Get deployment mode from environment or Streamlit secrets."""
+    """
+    Get the current deployment mode from environment variables.
+
+    Returns:
+        str: Deployment mode ('local' or 'cloud')
+    """
     # Try Streamlit secrets first (for cloud deployment)
     try:
         if hasattr(st, "secrets") and "DEPLOYMENT_MODE" in st.secrets:
@@ -405,8 +374,16 @@ def get_deployment_mode() -> str:
     return os.getenv("DEPLOYMENT_MODE", "local")
 
 
+# ====================================
+# Get in-memory storage mode setting
+# ====================================
 def get_in_memory_mode() -> bool:
-    """Get in-memory mode from environment or Streamlit secrets."""
+    """
+    Get the in-memory storage mode setting from environment.
+
+    Returns:
+        bool: True if using in-memory storage, False for persistent storage
+    """
     # Try Streamlit secrets first (for cloud deployment)
     try:
         if hasattr(st, "secrets") and "IN_MEMORY" in st.secrets:
@@ -434,6 +411,9 @@ def load_model_configs(config: OmegaConf) -> Dict[str, List[Dict]]:
         }
 
 
+# ====================================
+# Check API key availability for model
+# ====================================
 def check_api_key_availability(model_config: Dict[str, Any]) -> Tuple[bool, str]:
     """
     Check if required API key is available for the selected model.
@@ -477,6 +457,9 @@ def check_api_key_availability(model_config: Dict[str, Any]) -> Tuple[bool, str]
     return False, f"Unknown provider: {provider}"
 
 
+# ====================================
+# Get OpenAI API key from environment or user input
+# ====================================
 def get_openai_key():
     """
     1. Reads OPENAI_API_KEY from .env in the repo root (without setting os.environ).
@@ -505,6 +488,9 @@ def get_openai_key():
     return openai_key
 
 
+# ====================================
+# Display model selection UI in sidebar
+# ====================================
 def select_model_ui(config: OmegaConf) -> Optional[Dict[str, Any]]:
     """
     Display model selection UI with deployment-aware options and API key management.

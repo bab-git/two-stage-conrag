@@ -5,6 +5,13 @@ This directory contains the core business logic and processing pipeline for the 
 ## Structure
 
 ### `my_lib/` – Modular Backend Pipeline Components:
+- **`LLMManager.py`**: 
+  - **Purpose**: Manages LLM initialization and interaction across different providers.
+  - **Key Functions**: 
+    - `get_llm()`: Initializes and returns appropriate LLM instance.
+    - Provider-specific methods for OpenAI, Groq, and local models.
+
+
 - **`pdf_manager.py`**: 
   - **Purpose**: Handles PDF loading, chunking, and vector store creation.
   - **Key Functions**: 
@@ -37,11 +44,12 @@ This directory contains the core business logic and processing pipeline for the 
 
 ### Other Files:
 - **`settings.py`**
-  - **Purpose**: Loads environment variables and provides execution context utilities.
+  - **Purpose**: Environment configuration, logging setup, and execution context utilities.
   - **Details**:
-    - Loads `.env` using `dotenv` (secrets like `OPENAI_API_KEY`).
-    - Optionally includes `validate_env_secrets()` for API key validation at runtime.
-    - Provides `is_streamlit_running()` to detect whether the code is executing in a Streamlit session.
+    - Configures logging to both console and file (`logs/app.log`).
+    - Loads `.env` using `dotenv` for API keys and secrets.
+    - Provides `load_and_validate_env_secrets()` for API key validation.
+    - Includes `is_streamlit_running()` to detect Streamlit execution context.
 
 
 ## Usage

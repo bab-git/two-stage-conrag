@@ -1,4 +1,10 @@
+"""Unit tests for QAchains class functionality."""
+
+# ====================================
+# Test question shortening functionality
+# ====================================
 def test_shorten_question_unit(config, monkeypatch):
+    """Test the question shortening functionality with mocked dependencies."""
     from backend.my_lib.qa_chains import QAchains
     
     # Mock the entire Retrievers dependency
@@ -35,7 +41,11 @@ def test_shorten_question_unit(config, monkeypatch):
     assert qach.question == "How are you?"
     assert qach.shortened_question == "mocked shortened: How are you?"
 
+# ====================================
+# Test answer generation functionality
+# ====================================
 def test_generate_answer_unit(config, monkeypatch):
+    """Test the answer generation functionality with mocked LLM and documents."""
     from backend.my_lib.qa_chains import QAchains
     from backend.my_lib.LLMManager import LLMManager
     from langchain_core.documents import Document

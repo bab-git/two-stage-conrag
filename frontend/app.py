@@ -46,6 +46,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# ====================================
+# Initialize Streamlit session state variables
+# ====================================
 def initialize_session_state() -> None:
     """
     Initialize necessary session state variables for Streamlit.
@@ -67,9 +70,24 @@ def initialize_session_state() -> None:
     logger.debug("Session state initialized.")
 
 
-# Cache this resource so it's only loaded once per session
+# ====================================
+# Load local LLaMA model with caching
+# ====================================
 @st.cache_resource
 def load_local_llama(repo_id: str, filename: str) -> Llama:
+    """
+    Load and cache a local LLaMA model using llama-cpp-python.
+
+    Args:
+        repo_id (str): HuggingFace repository ID for the model
+        filename (str): Specific model file to load
+
+    Returns:
+        Llama: Loaded LLaMA model instance
+
+    Raises:
+        ImportError: If llama-cpp-python is not available
+    """
     if not LLAMA_CPP_AVAILABLE:
         raise ImportError(
             "llama-cpp-python is not available. This is expected for cloud deployment."
@@ -88,6 +106,9 @@ def load_local_llama(repo_id: str, filename: str) -> Llama:
     return llama_instance
 
 
+# ====================================
+# Build vector store from PDF documents with caching
+# ====================================
 @st.cache_resource
 def vector_store_builder(
     pdf_path: str, _config: OmegaConf, uploaded: list | None
@@ -118,6 +139,9 @@ def vector_store_builder(
     return pdf_manager, retrievers
 
 
+# ====================================
+# Main Streamlit application entry point
+# ====================================
 def main() -> None:
     """
     Entry point for the Streamlit application that drives the Two-Stage RAG PDF QA system.

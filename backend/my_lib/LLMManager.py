@@ -26,6 +26,9 @@ class LLMManager:
     It supports both string prompts and LangChain PromptTemplate objects.
     """
 
+    # ====================================
+    # Initialize LLM manager with model configuration
+    # ====================================
     def __init__(self, model_config: dict, api_key: str = None):
         """
         Initialize the LLMManager with a specific LLM instance.
@@ -68,6 +71,9 @@ class LLMManager:
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
+    # ====================================
+    # Get Groq API key from environment or Streamlit secrets
+    # ====================================
     def _get_groq_api_key(self) -> str:
         """Get Groq API key from Streamlit secrets or environment variables."""
         # Try Streamlit secrets first (for cloud deployment)
@@ -80,6 +86,9 @@ class LLMManager:
         # Fall back to environment variable
         return os.getenv("GROQ_API_KEY", "")
 
+    # ====================================
+    # Set LLaMA instance for local model usage
+    # ====================================
     def set_llama_instance(self, llama_instance):
         """Set the LLaMA instance for local models."""
         if self.provider == "llama_cpp":
@@ -89,6 +98,9 @@ class LLMManager:
                 "set_llama_instance can only be called for llama_cpp provider"
             )
 
+    # ====================================
+    # Invoke LLM with prompt and parameters
+    # ====================================
     def invoke(
         self,
         prompt: Union[str, PromptTemplate, ChatPromptTemplate],
@@ -107,14 +119,6 @@ class LLMManager:
         Returns:
             str: The generated response
         """
-        # Use provided llm_instance or fall back to self.llm
-        # current_llm = llm_instance if llm_instance is not None else self.llm
-
-        # Detect model type for the current LLM if needed
-        # if llm_instance is not None:
-        #     current_model_type = self._detect_model_type(llm_instance)
-        # else:
-        #     current_model_type = self.model_type
 
         try:
             if self.model_type in ["openai", "groq"]:
@@ -133,6 +137,9 @@ class LLMManager:
             logger.error(f"Error during LLM invocation: {e}")
             raise
 
+    # ====================================
+    # Invoke OpenAI or Groq models via LangChain
+    # ====================================
     def _invoke_langchain(
         self,
         system_prompt: Union[str, PromptTemplate, ChatPromptTemplate],
@@ -150,11 +157,7 @@ class LLMManager:
         Returns:
             str: Generated response
         """
-        # if isinstance(prompt, str):
-        #     # Convert string to PromptTemplate
-        #     prompt_template = PromptTemplate.from_template(prompt)
-        # else:
-        #     prompt_template = prompt
+
         prompt_template = PromptTemplate.from_template(system_prompt)
         # chain = prompt_template | self.llm | StrOutputParser()
         # Create the chain
@@ -169,6 +172,9 @@ class LLMManager:
 
         return response
 
+    # ====================================
+    # Invoke local LLaMA model via llama-cpp
+    # ====================================
     def _invoke_llama_cpp(
         self,
         prompt: Union[str, PromptTemplate],

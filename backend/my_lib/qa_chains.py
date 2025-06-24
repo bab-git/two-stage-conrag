@@ -8,12 +8,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# streamlit_running = is_streamlit_running()
-# if streamlit_running == False:
-#     print('streamlit is not running')
 
-
+# ====================================
 # The QAchains class
+# ====================================
 class QAchains:
     """
     A class that orchestrates the Question-Answering pipeline for document-based queries.
@@ -29,6 +27,9 @@ class QAchains:
     through question shortening and document ranking.
     """
 
+    # ====================================
+    # Initialize QA chains with retrievers and configuration
+    # ====================================
     def __init__(
         self, retrievers: Retrievers, config: OmegaConf, llm_manager: LLMManager = None
     ):
@@ -62,6 +63,9 @@ class QAchains:
         self.selected_documents = None
         self.drs_scores = None
 
+    # ====================================
+    # Shorten question to essential keywords using LLM
+    # ====================================
     def shorten_question(self, question: str) -> None:
         """
         Shortens the question to a short phrase with essential keywords.
@@ -90,23 +94,10 @@ class QAchains:
         """
 
         try:
-            # custom_short_prompt = PromptTemplate.from_template(shortening_prompt)
-
-            # shortening_chain = (
-            #     {"original_question": RunnablePassthrough()}
-            #     | custom_short_prompt
-            #     | self.llm
-            #     | StrOutputParser()
-            # )
-            # chain = custom_short_prompt | self.llm | StrOutputParser()
-
-            # shortened_question = shortening_chain.invoke(question)
             invoke_kwargs = {"original_question": question}
             shortened_question = self.llm_manager.invoke(
                 shortening_prompt, invoke_kwargs, max_tokens=128, verbose=self.verbose
             )
-            # shortened_question = chain.invoke({"original_question": question})
-            # print(shortened_question)
             if is_streamlit_running():
                 st.success(f"The shortened question:\n {shortened_question}")
             else:
@@ -121,6 +112,9 @@ class QAchains:
             else:
                 logger.error(f"Failed to generate shortened question: {e}")
 
+    # ====================================
+    # Retrieve and process relevant context using two-stage approach
+    # ====================================
     def retrieve_context(self) -> None:
         """
         Retrieves and processes relevant context from documents using a two-stage retrieval approach.
@@ -291,6 +285,9 @@ class QAchains:
             else:
                 logger.error(f"Failed to retrieve context for the input quersion: {e}")
 
+    # ====================================
+    # Generate final answer from retrieved context using LLM
+    # ====================================
     def generate_answer(self) -> str:
         """
         Generate an answer to the question based on the top-k ranked chunks of documents.
@@ -299,9 +296,9 @@ class QAchains:
         The answer is generated using a custom prompt template that provides context from the top-k ranked documents.
         The answer is then parsed and returned as a string.
 
-        :return: str
+        Returns:
+            str: Generated answer based on retrieved context, or None if generation fails
         """
-
         system_prompt = """ You are an expert financial analyst with extensive experience in interpreting reports, analyzing financial data, and generating insights from dense textual information. 
         Your task is to answer questions using only the provided document chunks as context. 
         Your answers should focus solely on the information within the document chunks and avoid speculation or any information not directly supported by the text.
