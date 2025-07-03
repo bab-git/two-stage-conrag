@@ -1,6 +1,9 @@
 # ===== These configurtions are for the cloud deployment through streamlit cloud
 # Optimized configuration for Streamlit Cloud performance
 [server]
+headless = true
+port = 8501
+
 # Disable file watching (major performance gain in cloud)
 fileWatcherType = "none"
 
@@ -12,13 +15,10 @@ runOnSave = false
 # Memory and connection optimization
 maxUploadSize = 10
 maxMessageSize = 200
-headless = true
+
 
 # WebSocket settings for better responsiveness
 enableWebsocketCompression = true
-
-# Session management
-cookieSecret = "your-secret-key-here"
 
 [browser]
 # Disable telemetry and stats collection
@@ -40,10 +40,21 @@ magicEnabled = false
 # Memory optimization - keep this as false to avoid serialization errors
 enforceSerializableSessionState = false
 
+[ui]
+# Sidebar width configuration (default is 21rem, increase for wider sidebar)
+sidebarWidth = 100
+
+# [theme]
+# # Clean theme for better perceived performance
+# primaryColor = "#1f77b4"
+# backgroundColor = "#ffffff"
+# secondaryBackgroundColor = "#f0f2f6"
+# textColor = "#262730"
+# font = "sans serif"
+
 [theme]
-# Clean theme for better perceived performance
-primaryColor = "#1f77b4"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#f0f2f6"
-textColor = "#262730"
-font = "sans serif"
+base="light"
+backgroundColor="#F3E8FF"
+primaryColor="#6C4AB6"  # Optional: accent color
+secondaryBackgroundColor="#F8F1FF"
+textColor="#1C1C1C"

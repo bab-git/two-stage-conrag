@@ -16,6 +16,13 @@
 <img src="photo.png" alt="Screenshot of the PDF Question Answering" width="1000"/>
 *Figure: Screenshot of the PDF Question Answering System Dashboard.*
 
+## 🚀 Live Demo
+
+**Try the application live:** [https://bbkhosseini--two-stage-conrag-run.modal.run/](https://bbkhosseini--two-stage-conrag-run.modal.run/)
+
+*Experience the Two-Stage Consecutive RAG system in action! Upload your PDFs and ask questions directly in your browser.*
+
+
 ## Table of Contents
 - [Introduction](#introduction)
 - [System Overview](#system-overview)
