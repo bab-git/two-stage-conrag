@@ -1,6 +1,9 @@
 # ===== These configurtions are for the cloud deployment through streamlit cloud
 # Optimized configuration for Streamlit Cloud performance
 [server]
+headless = true
+port = 8501
+
 # Disable file watching (major performance gain in cloud)
 fileWatcherType = "none"
 
@@ -12,13 +15,10 @@ runOnSave = false
 # Memory and connection optimization
 maxUploadSize = 10
 maxMessageSize = 200
-headless = true
+
 
 # WebSocket settings for better responsiveness
 enableWebsocketCompression = true
-
-# Session management
-cookieSecret = "your-secret-key-here"
 
 [browser]
 # Disable telemetry and stats collection
