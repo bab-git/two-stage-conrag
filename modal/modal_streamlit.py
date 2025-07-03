@@ -33,6 +33,18 @@ def main():
         get_deployment_mode,
     )
 
+    # Adjust sidebar width
+    st.markdown(
+        """
+        <style>
+            section[data-testid="stSidebar"] {
+                width: 400px !important; /* Adjust this value as needed */
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     # ====================================
     # Initialize and clear problematic state on startup
     # ====================================

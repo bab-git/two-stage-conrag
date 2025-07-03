@@ -40,6 +40,10 @@ magicEnabled = false
 # Memory optimization - keep this as false to avoid serialization errors
 enforceSerializableSessionState = false
 
+[ui]
+# Sidebar width configuration (default is 21rem, increase for wider sidebar)
+sidebarWidth = 100
+
 [theme]
 # Clean theme for better perceived performance
 primaryColor = "#1f77b4"
