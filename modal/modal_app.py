@@ -58,7 +58,7 @@ if not streamlit_script_local_path.exists():
     )
 
 @app.function(
-        # gpu="T4:1",
+        gpu="A10G:1",
         secrets=[modal.Secret.from_name("groq-secret")]
         )
 @modal.concurrent(max_inputs=100)

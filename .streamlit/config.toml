@@ -44,10 +44,17 @@ enforceSerializableSessionState = false
 # Sidebar width configuration (default is 21rem, increase for wider sidebar)
 sidebarWidth = 100
 
+# [theme]
+# # Clean theme for better perceived performance
+# primaryColor = "#1f77b4"
+# backgroundColor = "#ffffff"
+# secondaryBackgroundColor = "#f0f2f6"
+# textColor = "#262730"
+# font = "sans serif"
+
 [theme]
-# Clean theme for better perceived performance
-primaryColor = "#1f77b4"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#f0f2f6"
-textColor = "#262730"
-font = "sans serif"
+base="light"
+backgroundColor="#F3E8FF"
+primaryColor="#6C4AB6"  # Optional: accent color
+secondaryBackgroundColor="#F8F1FF"
+textColor="#1C1C1C"
