@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] Loading Screen Implementation
+
+### Added
+- **Loading Screen**: Implemented elegant loading indicators for both local and Modal deployments
+  - Simple `st.info()` loading message that appears during app initialization
+  - Automatic clearing of loading message once all components are loaded
+  - Improved user experience during cold starts and app startup
+  
 ## [1.1.0] Groq Models Support and UX Enhancements
 
 ### Added

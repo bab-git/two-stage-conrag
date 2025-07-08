@@ -13,10 +13,15 @@ def main():
     import numpy as np
     import pandas as pd
     import streamlit as st
+
+    loading_placeholder = st.empty()
+    loading_placeholder.info("🚀 Loading Two-Stage ConRAG System... Please wait.")
+        
     import os
     from pathlib import Path
     from omegaconf import OmegaConf
     import sys
+    import time
     # from PIL import Image
     # sys.path.append('/root/frontend')  # Add this line
     from backend.my_lib.pdf_manager import PDFManager
@@ -25,6 +30,7 @@ def main():
     from backend.settings import load_and_validate_env_secrets
     from backend.my_lib.LLMManager import LLMManager
     from frontend.helper_gui import (
+        # show_loading_screen,
         question_input_output_ui,
         display_results_ui,
         pdf_uploader_ui,
@@ -32,6 +38,11 @@ def main():
         get_in_memory_mode,
         get_deployment_mode,
     )
+    loading_placeholder.empty()
+
+    # ====================================
+    # Main App Content (only shown after loading)
+    # ====================================
 
     # Adjust sidebar width
     st.markdown(
